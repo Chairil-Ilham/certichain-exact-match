@@ -50,6 +50,7 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --font-sans: var(--font-sans);
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --shadow-card: var(--shadow-card);
   --color-input: var(--input);
   --color-ring: var(--ring);
