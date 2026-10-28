@@ -13,8 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as CertificateCodeRouteImport } from './routes/certificate.$code'
+import { Route as StudentIndexRouteImport } from './routes/student/index'
+import { Route as StudentCertificatesRouteImport } from './routes/student/certificates'
+import { Route as StudentProfileRouteImport } from './routes/student/profile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -36,6 +40,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentRouteRoute = StudentRouteRouteImport.update({
+  id: '/student',
+  path: '/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -46,14 +55,33 @@ const CertificateCodeRoute = CertificateCodeRouteImport.update({
   path: '/certificate/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentIndexRoute = StudentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentCertificatesRoute = StudentCertificatesRouteImport.update({
+  id: '/certificates',
+  path: '/certificates',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
+const StudentProfileRoute = StudentProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => StudentRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/student': typeof StudentRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
   '/certificate/$code': typeof CertificateCodeRoute
+  '/student/certificates': typeof StudentCertificatesRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/': typeof StudentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,25 +90,36 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
   '/certificate/$code': typeof CertificateCodeRoute
+  '/student/certificates': typeof StudentCertificatesRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student': typeof StudentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/student': typeof StudentRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
   '/certificate/$code': typeof CertificateCodeRoute
+  '/student/certificates': typeof StudentCertificatesRoute
+  '/student/profile': typeof StudentProfileRoute
+  '/student/': typeof StudentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/student'
     | '/about'
     | '/access-denied'
     | '/login'
     | '/verify'
     | '/certificate/$code'
+    | '/student/certificates'
+    | '/student/profile'
+    | '/student/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,18 +128,26 @@ export interface FileRouteTypes {
     | '/login'
     | '/verify'
     | '/certificate/$code'
+    | '/student/certificates'
+    | '/student/profile'
+    | '/student'
   id:
     | '__root__'
     | '/'
+    | '/student'
     | '/about'
     | '/access-denied'
     | '/login'
     | '/verify'
     | '/certificate/$code'
+    | '/student/certificates'
+    | '/student/profile'
+    | '/student/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  StudentRouteRoute: typeof StudentRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AccessDeniedRoute: typeof AccessDeniedRoute
   LoginRoute: typeof LoginRoute
@@ -138,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student': {
+      id: '/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof StudentRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -152,11 +206,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CertificateCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/': {
+      id: '/student/'
+      path: '/'
+      fullPath: '/student/'
+      preLoaderRoute: typeof StudentIndexRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/certificates': {
+      id: '/student/certificates'
+      path: '/certificates'
+      fullPath: '/student/certificates'
+      preLoaderRoute: typeof StudentCertificatesRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
+    '/student/profile': {
+      id: '/student/profile'
+      path: '/profile'
+      fullPath: '/student/profile'
+      preLoaderRoute: typeof StudentProfileRouteImport
+      parentRoute: typeof StudentRouteRoute
+    }
   }
 }
 
+interface StudentRouteRouteChildren {
+  StudentCertificatesRoute: typeof StudentCertificatesRoute
+  StudentProfileRoute: typeof StudentProfileRoute
+  StudentIndexRoute: typeof StudentIndexRoute
+}
+
+const StudentRouteRouteChildren: StudentRouteRouteChildren = {
+  StudentCertificatesRoute: StudentCertificatesRoute,
+  StudentProfileRoute: StudentProfileRoute,
+  StudentIndexRoute: StudentIndexRoute,
+}
+
+const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
+  StudentRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  StudentRouteRoute: StudentRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AccessDeniedRoute: AccessDeniedRoute,
   LoginRoute: LoginRoute,
