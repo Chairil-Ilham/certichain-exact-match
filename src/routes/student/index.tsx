@@ -5,7 +5,7 @@ import { DemoBadge, EmptyState, StatCard, StatusBadge } from "@/components/app/b
 import { getStudent, listCertificatesForStudent } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { formatDate } from "@/lib/format";
-import { useCurrentStudentId } from "./route";
+import { useCurrentStudentId } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/student/")({ component: StudentHome });
 

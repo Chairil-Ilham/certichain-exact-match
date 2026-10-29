@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/bits";
 import { CertificateForm } from "@/components/app/certificate-form";
 import { createCertificate } from "@/lib/store";
-import { ADMIN_ACTOR } from "./route";
+import { ADMIN_ACTOR } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/admin/certificates/new")({ component: NewCert });
 

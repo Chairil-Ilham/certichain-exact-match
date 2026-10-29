@@ -8,7 +8,7 @@ import { CopyButton, EmptyState, PageHeader, StatusBadge } from "@/components/ap
 import { listCertificatesForStudent } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { formatDate, matchesQuery } from "@/lib/format";
-import { useCurrentStudentId } from "./route";
+import { useCurrentStudentId } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/student/certificates")({ component: MyCerts });
 

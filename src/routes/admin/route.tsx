@@ -13,8 +13,6 @@ const NAV: NavItem[] = [
   { to: "/admin/settings", label: "Pengaturan", Icon: Settings },
 ];
 
-export const ADMIN_ACTOR = "Admin Demo";
-
 export const Route = createFileRoute("/admin")({
   ssr: false,
   beforeLoad: () => {

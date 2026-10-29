@@ -10,7 +10,7 @@ import { createStudent, listCertificates, listStudents } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { matchesQuery } from "@/lib/format";
 import { studentFormSchema } from "@/lib/validation";
-import { ADMIN_ACTOR } from "./route";
+import { ADMIN_ACTOR } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/admin/students")({ component: Students });
 

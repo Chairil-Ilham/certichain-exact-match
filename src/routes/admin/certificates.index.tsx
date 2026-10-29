@@ -12,7 +12,7 @@ import { listActivity, listCertificates, listStudents, revokeCertificate, update
 import { useData } from "@/lib/use-data";
 import { formatDate, formatDateTime, matchesQuery } from "@/lib/format";
 import type { Certificate } from "@/lib/types";
-import { ADMIN_ACTOR } from "./route";
+import { ADMIN_ACTOR } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/admin/certificates/")({ component: CertTable });
 
