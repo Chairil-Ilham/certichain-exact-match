@@ -5,7 +5,7 @@ import { useData } from "@/lib/use-data";
 import { useWallet } from "@/providers/wallet";
 import { formatDateTime, shortAddress } from "@/lib/format";
 import { useSession } from "@/providers/session";
-import { useCurrentStudentId } from "./route";
+import { useCurrentStudentId } from "@/lib/session-helpers";
 
 export const Route = createFileRoute("/student/profile")({ component: Profile });
 

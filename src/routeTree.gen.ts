@@ -12,13 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccessDeniedRouteImport } from './routes/access-denied'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as StudentRouteRouteImport } from './routes/student/route'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminActivityRouteImport } from './routes/admin/activity'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminStudentsRouteImport } from './routes/admin/students'
 import { Route as CertificateCodeRouteImport } from './routes/certificate.$code'
 import { Route as StudentIndexRouteImport } from './routes/student/index'
 import { Route as StudentCertificatesRouteImport } from './routes/student/certificates'
 import { Route as StudentProfileRouteImport } from './routes/student/profile'
+import { Route as AdminCertificatesIndexRouteImport } from './routes/admin/certificates.index'
+import { Route as AdminCertificatesNewRouteImport } from './routes/admin/certificates.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,6 +42,11 @@ const AccessDeniedRoute = AccessDeniedRouteImport.update({
   path: '/access-denied',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -49,6 +61,26 @@ const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminStudentsRoute = AdminStudentsRouteImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const CertificateCodeRoute = CertificateCodeRouteImport.update({
   id: '/certificate/$code',
@@ -70,18 +102,35 @@ const StudentProfileRoute = StudentProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => StudentRouteRoute,
 } as any)
+const AdminCertificatesIndexRoute = AdminCertificatesIndexRouteImport.update({
+  id: '/certificates/',
+  path: '/certificates/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminCertificatesNewRoute = AdminCertificatesNewRouteImport.update({
+  id: '/certificates/new',
+  path: '/certificates/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/student': typeof StudentRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
   '/certificate/$code': typeof CertificateCodeRoute
   '/student/certificates': typeof StudentCertificatesRoute
   '/student/profile': typeof StudentProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/admin/certificates/new': typeof AdminCertificatesNewRoute
+  '/admin/certificates/': typeof AdminCertificatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,37 +138,57 @@ export interface FileRoutesByTo {
   '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
   '/certificate/$code': typeof CertificateCodeRoute
   '/student/certificates': typeof StudentCertificatesRoute
   '/student/profile': typeof StudentProfileRoute
+  '/admin': typeof AdminIndexRoute
   '/student': typeof StudentIndexRoute
+  '/admin/certificates/new': typeof AdminCertificatesNewRoute
+  '/admin/certificates': typeof AdminCertificatesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/student': typeof StudentRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/verify': typeof VerifyRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/students': typeof AdminStudentsRoute
   '/certificate/$code': typeof CertificateCodeRoute
   '/student/certificates': typeof StudentCertificatesRoute
   '/student/profile': typeof StudentProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/admin/certificates/new': typeof AdminCertificatesNewRoute
+  '/admin/certificates/': typeof AdminCertificatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/student'
     | '/about'
     | '/access-denied'
     | '/login'
     | '/verify'
+    | '/admin/activity'
+    | '/admin/settings'
+    | '/admin/students'
     | '/certificate/$code'
     | '/student/certificates'
     | '/student/profile'
+    | '/admin/'
     | '/student/'
+    | '/admin/certificates/new'
+    | '/admin/certificates/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -127,26 +196,40 @@ export interface FileRouteTypes {
     | '/access-denied'
     | '/login'
     | '/verify'
+    | '/admin/activity'
+    | '/admin/settings'
+    | '/admin/students'
     | '/certificate/$code'
     | '/student/certificates'
     | '/student/profile'
+    | '/admin'
     | '/student'
+    | '/admin/certificates/new'
+    | '/admin/certificates'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/student'
     | '/about'
     | '/access-denied'
     | '/login'
     | '/verify'
+    | '/admin/activity'
+    | '/admin/settings'
+    | '/admin/students'
     | '/certificate/$code'
     | '/student/certificates'
     | '/student/profile'
+    | '/admin/'
     | '/student/'
+    | '/admin/certificates/new'
+    | '/admin/certificates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   StudentRouteRoute: typeof StudentRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AccessDeniedRoute: typeof AccessDeniedRoute
@@ -178,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccessDeniedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -198,6 +288,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/students': {
+      id: '/admin/students'
+      path: '/students'
+      fullPath: '/admin/students'
+      preLoaderRoute: typeof AdminStudentsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/certificate/$code': {
       id: '/certificate/$code'
@@ -227,8 +345,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentProfileRouteImport
       parentRoute: typeof StudentRouteRoute
     }
+    '/admin/certificates/': {
+      id: '/admin/certificates/'
+      path: '/certificates'
+      fullPath: '/admin/certificates/'
+      preLoaderRoute: typeof AdminCertificatesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/certificates/new': {
+      id: '/admin/certificates/new'
+      path: '/certificates/new'
+      fullPath: '/admin/certificates/new'
+      preLoaderRoute: typeof AdminCertificatesNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
+
+interface AdminRouteRouteChildren {
+  AdminActivityRoute: typeof AdminActivityRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStudentsRoute: typeof AdminStudentsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminCertificatesNewRoute: typeof AdminCertificatesNewRoute
+  AdminCertificatesIndexRoute: typeof AdminCertificatesIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminActivityRoute: AdminActivityRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminStudentsRoute: AdminStudentsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminCertificatesNewRoute: AdminCertificatesNewRoute,
+  AdminCertificatesIndexRoute: AdminCertificatesIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface StudentRouteRouteChildren {
   StudentCertificatesRoute: typeof StudentCertificatesRoute
@@ -248,6 +402,7 @@ const StudentRouteRouteWithChildren = StudentRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   StudentRouteRoute: StudentRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AccessDeniedRoute: AccessDeniedRoute,

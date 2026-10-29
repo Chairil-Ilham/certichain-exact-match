@@ -2,7 +2,8 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { FileText, LayoutGrid, Loader2, UserRound } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/app/dashboard-shell";
 import { DemoBadge } from "@/components/app/bits";
-import { readSession, useSession } from "@/providers/session";
+import { readSession } from "@/providers/session";
+import { useCurrentStudentId } from "@/lib/session-helpers";
 import { getStudent } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 
@@ -23,11 +24,6 @@ export const Route = createFileRoute("/student")({
   pendingComponent: () => <div className="grid min-h-screen place-items-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>,
   component: StudentLayout,
 });
-
-export function useCurrentStudentId() {
-  const { session } = useSession();
-  return session?.kind === "student-demo" ? session.student_id : (readSession() as { student_id?: string } | null)?.student_id ?? "";
-}
 
 function StudentLayout() {
   const id = useCurrentStudentId();
