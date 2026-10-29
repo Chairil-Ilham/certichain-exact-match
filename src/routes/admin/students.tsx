@@ -29,7 +29,7 @@ function Students() {
       <form className="mb-6 grid gap-3 rounded-xl border bg-card p-5 shadow-card sm:grid-cols-4 sm:items-end" onSubmit={async (e) => {
         e.preventDefault();
         const r = studentFormSchema.safeParse(form);
-        if (!r.success) { setErr(r.error.issues[0].message); return; }
+        if (!r.success) { setErr(r.error.issues[0]?.message ?? "Data tidak valid"); return; }
         try { await createStudent(form, ADMIN_ACTOR); toast.success("Mahasiswa ditambahkan"); setForm({ nama: "", nim: "", program_studi: "" }); setErr(null); }
         catch (x) { setErr(x instanceof Error ? x.message : "Gagal"); }
       }}>

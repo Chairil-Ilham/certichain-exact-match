@@ -74,6 +74,6 @@ export function CertificateForm({ initial, editing, onSubmit }: { initial?: Cert
   );
 }
 
-function E({ m }: { m?: string }) {
+function E({ m }: { m?: string | undefined }) {
   return m ? <p className="mt-1 text-sm text-destructive">{m}</p> : null;
 }
