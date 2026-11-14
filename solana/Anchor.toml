@@ -1,0 +1,8 @@
+[provider]
+cluster = "Devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "bunx vitest run src/test/solana.test.ts"
+
+# configure-solana.mjs writes the real deployment identity into programs.devnet.
