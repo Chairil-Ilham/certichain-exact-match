@@ -1,0 +1,16 @@
+name = "certichain-wallet-auth"
+main = "src/worker.ts"
+compatibility_date = "2026-11-14"
+
+# Set APP_ORIGIN and route /api/public/wallet/* to this Worker on that same domain.
+# No wildcard CORS and no external cookie origin are permitted.
+[vars]
+ISSUER_WALLETS = ""
+
+[[durable_objects.bindings]]
+name = "WALLET_TTL"
+class_name = "WalletTTL"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WalletTTL"]

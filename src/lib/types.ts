@@ -40,8 +40,8 @@ export interface WalletState {
   public_key: string | null;
   connection_status: WalletConnectionStatus;
   connected_at: string | null;
-  /** Always false until a backend challenge/signature flow exists. */
-  backend_authenticated: false;
+  /** True only after the temporary authentication service verifies a signature. */
+  backend_authenticated: boolean;
 }
 
 export type Session =
