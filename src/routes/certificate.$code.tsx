@@ -6,6 +6,7 @@ import { CopyButton, EmptyState, PrototypeNotice, SourceBadge, StatusBadge } fro
 import { getCertificateByCode } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { formatDate, formatDateTime, maskNim } from "@/lib/format";
+import { BlockchainPanel } from "@/components/app/blockchain-panel";
 
 export const Route = createFileRoute("/certificate/$code")({
   ssr: false,
@@ -57,9 +58,10 @@ function Detail() {
               <div className="border-t p-6">
                 <h2 className="text-sm font-semibold">Ringkasan pemeriksaan</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Kode ditemukan pada data demo dengan status <strong>{c.status === "valid" ? "Valid" : "Dicabut"}</strong>. Terakhir diperbarui {formatDateTime(c.updated_at)}. Tidak ada data on-chain untuk sertifikat ini.
+                  Verifikasi Database/Demo: kode ditemukan dengan status <strong>{c.status === "valid" ? "Valid" : "Dicabut"}</strong>. Terakhir diperbarui {formatDateTime(c.updated_at)}. Status demo terpisah dari status blockchain.
                 </p>
                 <div className="mt-3"><SourceBadge source="demo" /></div>
+                <BlockchainPanel certificate={c} />
               </div>
               <div className="flex flex-wrap gap-2 border-t p-6">
                 <CopyButton value={c.verification_code} />

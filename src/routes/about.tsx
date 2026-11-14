@@ -21,12 +21,13 @@ const WORKING = [
   "Koneksi Phantom Wallet: hubungkan, putuskan, pergantian akun, pemulihan otomatis",
   "Login mahasiswa demo dengan pencarian nama/NIM",
   "Dashboard admin: tambah, ubah, cabut sertifikat, tambah mahasiswa, riwayat aktivitas",
+  "Hash SHA-256 kanonis sertifikat dan pemeriksaan Devnet ketika Program ID tersedia",
 ];
 const SIMULATED = [
   "Penyimpanan data: localStorage browser (bukan database permanen)",
   "Login admin & mahasiswa: sesi lokal, belum aman untuk produksi",
-  "Autentikasi wallet via tanda tangan pesan: belum diterapkan",
-  "Pencatatan sertifikat di blockchain Solana: belum diterapkan",
+  "Autentikasi tanda tangan: kode tersedia, layanan sementara belum dikonfigurasi atau diuji dengan Phantom nyata",
+  "Pencatatan Devnet: program dan integrasi tersedia; deployment serta transaksi nyata belum diuji",
 ];
 
 function About() {
@@ -44,7 +45,7 @@ function About() {
         <div className="mt-10 rounded-xl border bg-card p-6 text-sm">
           <h2 className="font-semibold">Langkah berikutnya</h2>
           <p className="mt-2 text-muted-foreground">
-            Menyambungkan database dan autentikasi backend, menerapkan login wallet dengan challenge + tanda tangan berisi nonce sekali pakai, lalu program Solana untuk mencatat hash sertifikat secara on-chain.
+            Konfigurasikan layanan autentikasi sementara satu domain dengan nonce sekali pakai, deploy program Anchor ke Devnet, dan atur wallet penerbit. Data demo tetap lokal tanpa database permanen; data dapat hilang ketika browser dibersihkan atau perangkat berganti.
           </p>
         </div>
       </section>

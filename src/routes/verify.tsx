@@ -10,6 +10,7 @@ import { PrototypeNotice, SourceBadge, StatusBadge } from "@/components/app/bits
 import { verifyCode } from "@/lib/store";
 import { formatDate } from "@/lib/format";
 import type { VerifyResult } from "@/lib/types";
+import { BlockchainPanel } from "@/components/app/blockchain-panel";
 
 export const Route = createFileRoute("/verify")({
   validateSearch: z.object({ code: z.string().max(40).optional() }),
@@ -84,7 +85,7 @@ function VerifyPage() {
         </div>
 
         <PrototypeNotice className="mt-8">
-          Sumber data: data demo di browser ini. Pemeriksaan dilakukan pada data aplikasi, bukan pada blockchain. Tidak ada transaction signature yang ditampilkan karena belum ada pencatatan on-chain.
+          Data demo disimpan hanya di browser ini dan dapat hilang ketika browser dibersihkan atau perangkat berganti. Pemeriksaan demo dan blockchain dilakukan terpisah. Referensi transaksi lokal bukan bukti jaringan.
         </PrototypeNotice>
       </section>
     </PublicLayout>
@@ -113,7 +114,7 @@ function ResultCard({ result }: { result: VerifyResult }) {
       <div className={`flex items-center gap-3 px-5 py-4 ${valid ? "bg-success-soft" : "bg-destructive-soft"}`}>
         {valid ? <BadgeCheck className="size-6 text-success" /> : <Ban className="size-6 text-destructive" />}
         <div>
-          <p className={`font-semibold ${valid ? "text-success" : "text-destructive"}`}>{valid ? "Valid" : "Dicabut"}</p>
+          <p className={`font-semibold ${valid ? "text-success" : "text-destructive"}`}>Verifikasi Database/Demo · {valid ? "Valid" : "Dicabut"}</p>
           <p className="text-sm text-muted-foreground">{valid ? "Sertifikat tercatat dan berstatus aktif." : "Sertifikat tercatat tetapi telah dicabut penerbit."}</p>
         </div>
       </div>
@@ -126,6 +127,7 @@ function ResultCard({ result }: { result: VerifyResult }) {
         <Field label="Status" value={<StatusBadge status={c.status} />} />
       </dl>
       <div className="border-t px-5 py-3"><SourceBadge source={result.source} /></div>
+      <div className="px-5 pb-5"><BlockchainPanel certificate={c} /></div>
     </div>
   );
 }

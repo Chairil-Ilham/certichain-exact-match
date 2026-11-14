@@ -83,10 +83,11 @@ function PhantomCard() {
             {w.connection_status === "connecting" ? <Loader2 className="animate-spin" /> : <Wallet />} Hubungkan Phantom Wallet
           </Button>
         )}
+        {w.connection_status === "connected" && !w.backend_authenticated && <Button variant="outline" disabled={w.loading} onClick={() => void w.authenticate()}>{w.loading ? <Loader2 className="animate-spin" /> : <ShieldAlert />} Verifikasi tanda tangan</Button>}
       </div>
       <p className="mt-4 flex gap-2 text-xs text-muted-foreground">
         <ShieldAlert className="size-4 shrink-0" />
-        Koneksi wallet belum merupakan autentikasi terverifikasi. Akses dashboard berbasis wallet memerlukan verifikasi tanda tangan di backend, yang belum diterapkan.
+        {w.backend_authenticated ? `Autentikasi Terverifikasi. ${w.authSession?.role === "issuer" ? "Wallet memiliki konfigurasi penerbit; izin transaksi tetap diperiksa on-chain." : "Wallet belum memiliki role administratif."}` : "Wallet terhubung belum berarti autentikasi. Verifikasi tanda tangan memerlukan layanan sementara yang dikonfigurasi; tidak menggunakan sesi demo sebagai otorisasi."}
       </p>
     </div>
   );

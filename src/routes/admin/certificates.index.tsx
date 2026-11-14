@@ -13,6 +13,7 @@ import { useData } from "@/lib/use-data";
 import { formatDate, formatDateTime, matchesQuery } from "@/lib/format";
 import type { Certificate } from "@/lib/types";
 import { ADMIN_ACTOR } from "@/lib/session-helpers";
+import { BlockchainPanel } from "@/components/app/blockchain-panel";
 
 export const Route = createFileRoute("/admin/certificates/")({ component: CertTable });
 
@@ -141,7 +142,7 @@ function CertTable() {
       </Dialog>
 
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader><DialogTitle>{viewing?.certificate_name}</DialogTitle></DialogHeader>
           {viewing && (
             <div className="space-y-4 text-sm">
@@ -159,6 +160,7 @@ function CertTable() {
                 </ul>
               </div>
               <Button asChild variant="outline" size="sm"><Link to="/certificate/$code" params={{ code: viewing.verification_code }}>Buka halaman detail</Link></Button>
+              <BlockchainPanel certificate={viewing} admin />
             </div>
           )}
         </DialogContent>

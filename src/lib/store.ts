@@ -5,6 +5,7 @@
 import { DEMO_ACTIVITY, DEMO_CERTIFICATES, DEMO_STUDENTS } from "./demo-data";
 import type { Activity, Certificate, Student, VerifyResult } from "./types";
 import { certificateFormSchema, normalizeCode, studentFormSchema, type CertificateFormInput } from "./validation";
+import type { ChainReference } from "./solana";
 
 const KEY = "certichain.demo-db.v1";
 
@@ -12,6 +13,7 @@ interface DB {
   students: Student[];
   certificates: Certificate[];
   activity: Activity[];
+  chainReferences?: ChainReference[];
 }
 
 const seed = (): DB => ({
@@ -170,4 +172,16 @@ export async function resetDemoData() {
   await delay();
   db = seed();
   save();
+}
+
+/** References are browser demo data, never an authentication or chain truth source. */
+export async function saveChainReference(reference: ChainReference) {
+  const d = load();
+  if (!d.certificates.some(c => c.id === reference.certificateId)) throw new Error("Sertifikat tidak ditemukan");
+  d.chainReferences = [...(d.chainReferences ?? []).filter(r => r.signature !== reference.signature), reference];
+  log(reference.issuer, `Transaksi Devnet dikonfirmasi: ${reference.operation}`, "certificate", reference.certificateId);
+  save();
+}
+export async function getChainReferences(certificateId: string) {
+  return (load().chainReferences ?? []).filter(r => r.certificateId === certificateId);
 }
