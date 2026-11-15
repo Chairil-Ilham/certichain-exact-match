@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/bits";
@@ -5,7 +6,7 @@ import { CertificateForm } from "@/components/app/certificate-form";
 import { createCertificate } from "@/lib/store";
 import { ADMIN_ACTOR } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/admin/certificates/new")({ component: NewCert });
+export const Route = createFileRoute("/admin/certificates/new")({ head: () => pageHead("Tambah Sertifikat", "Penerbitan sertifikat demo CertiChain."), component: NewCert });
 
 function NewCert() {
   const navigate = useNavigate();

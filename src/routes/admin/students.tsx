@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, UserPlus, Users } from "lucide-react";
@@ -12,7 +13,7 @@ import { matchesQuery } from "@/lib/format";
 import { studentFormSchema } from "@/lib/validation";
 import { ADMIN_ACTOR } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/admin/students")({ component: Students });
+export const Route = createFileRoute("/admin/students")({ head: () => pageHead("Data Mahasiswa", "Pengelolaan mahasiswa sintetis CertiChain."), component: Students });
 
 function Students() {
   const studs = useData(() => listStudents());

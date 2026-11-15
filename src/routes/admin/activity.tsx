@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { Activity } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/app/bits";
@@ -5,7 +6,7 @@ import { listActivity } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { formatDateTime } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/activity")({ component: ActivityPage });
+export const Route = createFileRoute("/admin/activity")({ head: () => pageHead("Riwayat Aktivitas", "Riwayat perubahan sertifikat demo CertiChain."), component: ActivityPage });
 
 function ActivityPage() {
   const act = useData(() => listActivity());

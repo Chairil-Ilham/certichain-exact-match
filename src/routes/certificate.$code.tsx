@@ -12,6 +12,8 @@ export const Route = createFileRoute("/certificate/$code")({
   ssr: false,
   head: ({ params }) => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: `Sertifikat ${params.code} — CertiChain` },
       { name: "description", content: "Detail sertifikat akademik dan status verifikasinya." },
       { property: "og:title", content: `Sertifikat ${params.code} — CertiChain` },

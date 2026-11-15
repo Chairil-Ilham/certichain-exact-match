@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { FileText, LayoutGrid, Loader2, UserRound } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/app/dashboard-shell";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/student")({
     if (!s) throw redirect({ to: "/login" });
     if (s.kind !== "student-demo") throw redirect({ to: "/access-denied" });
   },
-  head: () => ({ meta: [{ title: "Dashboard Mahasiswa — CertiChain" }, { name: "robots", content: "noindex" }] }),
+  head: () => pageHead("Dashboard Mahasiswa", "Area mahasiswa demo CertiChain."),
   pendingComponent: () => <div className="grid min-h-screen place-items-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>,
   component: StudentLayout,
 });

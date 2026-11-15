@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Eye, FileText, Search, SearchCheck } from "lucide-react";
@@ -10,7 +11,7 @@ import { useData } from "@/lib/use-data";
 import { formatDate, matchesQuery } from "@/lib/format";
 import { useCurrentStudentId } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/student/certificates")({ component: MyCerts });
+export const Route = createFileRoute("/student/certificates")({ head: () => pageHead("Sertifikat Saya", "Daftar sertifikat mahasiswa demo CertiChain."), component: MyCerts });
 
 function MyCerts() {
   const id = useCurrentStudentId();

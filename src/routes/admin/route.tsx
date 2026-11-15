@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { Activity, FilePlus2, FileText, LayoutGrid, Loader2, Settings, Users } from "lucide-react";
 import { DashboardShell, type NavItem } from "@/components/app/dashboard-shell";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/admin")({
     if (!s) throw redirect({ to: "/login" });
     if (s.kind !== "admin") throw redirect({ to: "/access-denied" });
   },
-  head: () => ({ meta: [{ title: "Dashboard Admin — CertiChain" }, { name: "robots", content: "noindex" }] }),
+  head: () => pageHead("Dashboard Admin", "Area admin demo CertiChain."),
   pendingComponent: () => <div className="grid min-h-screen place-items-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>,
   component: () => (
     <DashboardShell items={NAV} title="Admin" headerExtra={<><DemoBadge /><span className="hidden text-sm font-medium md:inline">Admin Demo</span></>}>

@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Ban, BadgeCheck, FileText, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { listActivity, listCertificates, listStudents } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { formatDateTime } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/")({ component: AdminHome });
+export const Route = createFileRoute("/admin/")({ head: () => pageHead("Ringkasan Admin", "Ringkasan sertifikat dan mahasiswa demo CertiChain."), component: AdminHome });
 
 function AdminHome() {
   const certs = useData(() => listCertificates());

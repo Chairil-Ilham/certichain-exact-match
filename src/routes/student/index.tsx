@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Ban, BadgeCheck, FileText, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { useData } from "@/lib/use-data";
 import { formatDate } from "@/lib/format";
 import { useCurrentStudentId } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/student/")({ component: StudentHome });
+export const Route = createFileRoute("/student/")({ head: () => pageHead("Ringkasan Mahasiswa", "Ringkasan sertifikat mahasiswa demo CertiChain."), component: StudentHome });
 
 function StudentHome() {
   const id = useCurrentStudentId();

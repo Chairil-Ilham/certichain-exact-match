@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { RotateCcw } from "lucide-react";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog, PageHeader } from "@/components/app/bits";
 import { resetDemoData } from "@/lib/store";
 
-export const Route = createFileRoute("/admin/settings")({ component: Settings });
+export const Route = createFileRoute("/admin/settings")({ head: () => pageHead("Pengaturan", "Status integrasi dan pengaturan data demo CertiChain."), component: Settings });
 
 const STATUS = [
   ["Penyimpanan data", "localStorage browser (demo, tidak permanen)"],

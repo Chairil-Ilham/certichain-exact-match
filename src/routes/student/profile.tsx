@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoBadge, PageHeader } from "@/components/app/bits";
 import { getStudent } from "@/lib/store";
@@ -7,7 +8,7 @@ import { formatDateTime, shortAddress } from "@/lib/format";
 import { useSession } from "@/providers/session";
 import { useCurrentStudentId } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/student/profile")({ component: Profile });
+export const Route = createFileRoute("/student/profile")({ head: () => pageHead("Profil Mahasiswa", "Identitas demo dan status wallet CertiChain."), component: Profile });
 
 function Profile() {
   const id = useCurrentStudentId();
