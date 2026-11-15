@@ -1,6 +1,6 @@
 export interface WalletAuthSession { publicKey: string; role: "wallet" | "issuer"; expiresAt: number }
 export interface WalletChallenge { nonce: string; publicKey: string; domain: string; issuedAt: number; expiresAt: number; message: string }
-export const authConfigured = () => import.meta.env.VITE_WALLET_AUTH_ENABLED === "true";
+export const authConfigured = () => import.meta.env['VITE_WALLET_AUTH_ENABLED'] === "true";
 export async function walletAuthRequest<T>(action: "session" | "challenge" | "verify" | "logout", body?: unknown): Promise<T> {
   if (!authConfigured()) throw new Error("Layanan autentikasi sementara belum dikonfigurasi. Wallet terhubung belum berarti login terverifikasi.");
   const response = await fetch(`/api/public/wallet/${action}`, {

@@ -19,7 +19,8 @@ function StudentHome() {
   if (st.status === "error" || certs.status === "error" || (st.status === "ready" && !st.data))
     return <EmptyState Icon={Info} title="Data mahasiswa tidak tersedia">Silakan keluar lalu pilih akun demo lain.</EmptyState>;
 
-  const s = st.data!;
+  const s = st.data;
+  if (!s) return <EmptyState Icon={Info} title="Data mahasiswa tidak tersedia" />;
   const list = certs.data;
   const valid = list.filter((c) => c.status === "valid").length;
   const revoked = list.length - valid;

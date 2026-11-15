@@ -11,8 +11,8 @@ export const Route = createFileRoute("/admin/settings")({ component: Settings })
 const STATUS = [
   ["Penyimpanan data", "localStorage browser (demo, tidak permanen)"],
   ["Autentikasi admin", "Kode akses demo — belum siap produksi"],
-  ["Autentikasi wallet", "Belum diterapkan (perlu challenge + tanda tangan di backend)"],
-  ["Pencatatan blockchain", "Belum diterapkan"],
+  ["Autentikasi wallet", "Kode tersedia — layanan TTL belum dikonfigurasi atau diuji nyata"],
+  ["Pencatatan blockchain", "Program Anchor tersedia — deployment Devnet belum diuji"],
 ];
 
 function Settings() {

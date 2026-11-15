@@ -73,7 +73,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <Link to="/login" className="text-muted-foreground hover:text-foreground">Login</Link>
           </nav>
           <p className="text-muted-foreground">
-            Seluruh nama, NIM, dan sertifikat pada versi ini adalah data demonstrasi sintetis. Belum ada pencatatan on-chain.
+            Seluruh nama, NIM, dan sertifikat adalah data demonstrasi sintetis. Bukti on-chain hanya ditampilkan setelah pemeriksaan Devnet nyata.
           </p>
         </div>
       </footer>

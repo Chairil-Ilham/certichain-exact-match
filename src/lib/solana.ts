@@ -6,11 +6,11 @@ import { certificateHash, certificateSeed } from "./certificate-hash";
 import type { Certificate } from "./types";
 
 export const discriminator = (name: string) => sha256(new TextEncoder().encode(name)).slice(0, 8);
-export const solanaConfigured = () => Boolean(import.meta.env.VITE_SOLANA_PROGRAM_ID);
+export const solanaConfigured = () => Boolean(import.meta.env['VITE_SOLANA_PROGRAM_ID']);
 function configuration() {
-  const id = import.meta.env.VITE_SOLANA_PROGRAM_ID;
+  const id = import.meta.env['VITE_SOLANA_PROGRAM_ID'];
   if (!id) throw new Error("Program Solana belum dideploy atau Program ID belum dikonfigurasi.");
-  const rpc = import.meta.env.VITE_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+  const rpc = import.meta.env['VITE_SOLANA_RPC_URL'] ?? "https://api.devnet.solana.com";
   return { program: new PublicKey(id), connection: new Connection(rpc, { commitment: "confirmed", fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(20000) }) }) };
 }
 export function deriveCertificatePda(c: Certificate, program: PublicKey) {

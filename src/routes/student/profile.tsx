@@ -34,7 +34,7 @@ function Profile() {
             <dl className="mt-4 space-y-3 text-sm">
               <Row l="Jenis sesi" v="Mahasiswa demo (simulasi)" />
               <Row l="Wallet" v={w.public_key ? `Terhubung ${shortAddress(w.public_key)}` : "Tidak terhubung"} />
-              <Row l="Autentikasi wallet" v="Tidak — wallet tidak mengautentikasi akun ini" />
+              <Row l="Autentikasi wallet" v={w.backend_authenticated ? "Wallet terverifikasi — tidak mengautentikasi akun mahasiswa demo" : "Belum terverifikasi — sesi mahasiswa tetap demo"} />
             </dl>
           </div>
         </div>

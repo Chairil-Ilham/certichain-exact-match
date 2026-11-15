@@ -60,7 +60,7 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
         if (authConfigured()) {
           const epoch = generation.current;
           const { session } = await walletAuthRequest<{ session: WalletAuthSession | null }>("session");
-          if (!disposed && epoch === generation.current && session?.publicKey === provider.publicKey?.toString() && session.expiresAt > Date.now()) { setAuthSession(session); setState(s => ({ ...s, backend_authenticated: true })); }
+          if (!disposed && epoch === generation.current && session && session.publicKey === provider.publicKey?.toString() && session.expiresAt > Date.now()) { setAuthSession(session); setState(s => ({ ...s, backend_authenticated: true })); }
         }
       } catch { /* Silent restoration never prompts or establishes authentication. */ }
       finally { if (!disposed) setReady(true); }
