@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Ban, BadgeCheck, FileText, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { useData } from "@/lib/use-data";
 import { formatDate } from "@/lib/format";
 import { useCurrentStudentId } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/student/")({ component: StudentHome });
+export const Route = createFileRoute("/student/")({ head: () => pageHead("Ringkasan Mahasiswa", "Ringkasan sertifikat mahasiswa demo CertiChain."), component: StudentHome });
 
 function StudentHome() {
   const id = useCurrentStudentId();
@@ -19,7 +20,8 @@ function StudentHome() {
   if (st.status === "error" || certs.status === "error" || (st.status === "ready" && !st.data))
     return <EmptyState Icon={Info} title="Data mahasiswa tidak tersedia">Silakan keluar lalu pilih akun demo lain.</EmptyState>;
 
-  const s = st.data!;
+  const s = st.data;
+  if (!s) return <EmptyState Icon={Info} title="Data mahasiswa tidak tersedia" />;
   const list = certs.data;
   const valid = list.filter((c) => c.status === "valid").length;
   const revoked = list.length - valid;

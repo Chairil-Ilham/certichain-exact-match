@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpDown, Ban, Eye, FilePlus2, FileText, Pencil, Search } from "lucide-react";
@@ -15,7 +16,7 @@ import type { Certificate } from "@/lib/types";
 import { ADMIN_ACTOR } from "@/lib/session-helpers";
 import { BlockchainPanel } from "@/components/app/blockchain-panel";
 
-export const Route = createFileRoute("/admin/certificates/")({ component: CertTable });
+export const Route = createFileRoute("/admin/certificates/")({ head: () => pageHead("Data Sertifikat", "Pengelolaan sertifikat demo dan tindakan Solana Devnet CertiChain."), component: CertTable });
 
 const PAGE = 6;
 type SortKey = "issue_date" | "certificate_name" | "nama";

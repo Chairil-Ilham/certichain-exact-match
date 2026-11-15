@@ -1,3 +1,4 @@
+import { pageHead } from "@/lib/page-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { DemoBadge, PageHeader } from "@/components/app/bits";
 import { getStudent } from "@/lib/store";
@@ -7,7 +8,7 @@ import { formatDateTime, shortAddress } from "@/lib/format";
 import { useSession } from "@/providers/session";
 import { useCurrentStudentId } from "@/lib/session-helpers";
 
-export const Route = createFileRoute("/student/profile")({ component: Profile });
+export const Route = createFileRoute("/student/profile")({ head: () => pageHead("Profil Mahasiswa", "Identitas demo dan status wallet CertiChain."), component: Profile });
 
 function Profile() {
   const id = useCurrentStudentId();
@@ -34,7 +35,7 @@ function Profile() {
             <dl className="mt-4 space-y-3 text-sm">
               <Row l="Jenis sesi" v="Mahasiswa demo (simulasi)" />
               <Row l="Wallet" v={w.public_key ? `Terhubung ${shortAddress(w.public_key)}` : "Tidak terhubung"} />
-              <Row l="Autentikasi wallet" v="Tidak — wallet tidak mengautentikasi akun ini" />
+              <Row l="Autentikasi wallet" v={w.backend_authenticated ? "Wallet terverifikasi — tidak mengautentikasi akun mahasiswa demo" : "Belum terverifikasi — sesi mahasiswa tetap demo"} />
             </dl>
           </div>
         </div>

@@ -6,6 +6,8 @@ import { PublicLayout } from "@/components/app/public-layout";
 export const Route = createFileRoute("/access-denied")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Akses Ditolak — CertiChain" },
       { name: "description", content: "Anda tidak memiliki akses ke halaman ini." },
       { property: "og:title", content: "Akses Ditolak — CertiChain" },
