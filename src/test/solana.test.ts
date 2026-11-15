@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PublicKey } from "@solana/web3.js";
 import { Buffer } from "buffer";

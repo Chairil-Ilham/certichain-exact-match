@@ -62,11 +62,11 @@ export class WalletTTL {
         if (body.length > 4096) return json({ error: "Permintaan terlalu besar" }, 413);
         const input = JSON.parse(body) as Record<string, unknown>;
         if (path.endsWith("/challenge")) {
-          if (typeof input.publicKey !== "string" || input.publicKey.length > 50) return json({ error: "Alamat tidak valid" }, 400);
+          if (typeof input['publicKey'] !== "string" || input['publicKey'].length > 50) return json({ error: "Alamat tidak valid" }, 400);
           await this.alarm();
           const entries = await this.state.storage.list({ prefix: "nonce:" });
           if (entries.size >= 1000) return json({ error: "Terlalu banyak permintaan, coba lagi nanti" }, 429);
-          const challenge = await issueChallenge(this.state.storage, input.publicKey, new URL(this.env.APP_ORIGIN).origin);
+          const challenge = await issueChallenge(this.state.storage, input['publicKey'], new URL(this.env.APP_ORIGIN).origin);
           await this.state.storage.setAlarm(Date.now() + 60000);
           return json({ challenge });
         }
