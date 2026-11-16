@@ -1,4 +1,5 @@
 # CertiChain continuation
+- [ ] Configure candidate issuer, enforce Anchor signer checks, add identity tests, and write pre-deployment report without changing demo data.
 - [x] Canonical SHA-256 hashing and rule tests.
 - [x] Wallet lifecycle and signature-authentication core; fail closed without reliable shared TTL service.
 - [x] Anchor source, deployment-derived configuration and IDL-generation scripts; validator test source provided.
