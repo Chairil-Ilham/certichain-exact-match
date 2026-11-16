@@ -7,6 +7,7 @@ import { certificateHashHex } from "@/lib/certificate-hash";
 import { explorerAccount, explorerTransaction, solanaConfigured, submitCertificate, verifyOnchain, type ChainResult, type ChainReference } from "@/lib/solana";
 import { saveChainReference } from "@/lib/store";
 import type { Certificate } from "@/lib/types";
+import { isIssuerCandidate } from "@/lib/issuer-config";
 
 export function BlockchainPanel({ certificate, admin = false }: { certificate: Certificate; admin?: boolean }) {
   const wallet = useWallet();
@@ -33,7 +34,7 @@ export function BlockchainPanel({ certificate, admin = false }: { certificate: C
   };
   const verified = result && "record" in result ? result : null;
   const labels = { match: "Hash cocok", mismatch: "Hash tidak cocok", revoked: "Sertifikat dicabut on-chain", not_found: "Data on-chain tidak ditemukan", network_error: "Pemeriksaan jaringan gagal", unconfigured: "Belum dikonfigurasi" };
-  const allowed = solanaConfigured() && wallet.backend_authenticated && wallet.authSession?.role === "issuer";
+  const allowed = solanaConfigured() && wallet.backend_authenticated && wallet.authSession?.role === "issuer" && isIssuerCandidate(wallet.public_key) && wallet.authSession.publicKey === wallet.public_key && wallet.authSession.expiresAt > Date.now();
   return (
     <section className="mt-6 min-w-0 border-t pt-5" aria-label="Verifikasi Blockchain Solana">
       <div className="flex flex-wrap items-center justify-between gap-2">

@@ -36,6 +36,7 @@ pub mod certichain {
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
+    #[account(address = CANDIDATE_ISSUER @ CertiChainError::Unauthorized)]
     pub authority: Signer<'info>,
     #[account(init, payer = authority, space = Config::SPACE, seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
@@ -48,7 +49,7 @@ pub struct Initialize<'info> {
 #[derive(Accounts)]
 #[instruction(certificate_seed: [u8; 32])]
 pub struct SimpanSertifikat<'info> {
-    #[account(mut)]
+    #[account(mut, address = CANDIDATE_ISSUER @ CertiChainError::Unauthorized)]
     pub issuer: Signer<'info>,
     #[account(seeds = [b"config"], bump = config.bump, constraint = config.authority == issuer.key() @ CertiChainError::Unauthorized)]
     pub config: Account<'info, Config>,
@@ -65,7 +66,10 @@ pub struct VerifikasiSertifikat<'info> {
 #[derive(Accounts)]
 #[instruction(certificate_seed: [u8; 32])]
 pub struct CabutSertifikat<'info> {
+    #[account(address = CANDIDATE_ISSUER @ CertiChainError::Unauthorized)]
     pub issuer: Signer<'info>,
+    #[account(seeds = [b"config"], bump = config.bump, constraint = config.authority == issuer.key() @ CertiChainError::Unauthorized)]
+    pub config: Account<'info, Config>,
     #[account(mut, seeds = [b"certificate", certificate_seed.as_ref()], bump = record.bump, has_one = issuer @ CertiChainError::Unauthorized)]
     pub record: Account<'info, CertificateRecord>,
 }
@@ -91,6 +95,10 @@ pub enum CertiChainError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn issuer_matches_official_candidate() {
+        assert_eq!(CANDIDATE_ISSUER.to_string(), "DUPoMPmu5Hbsh1RNHuc2VMV3GVCZkj8ZEZbybk5fRh4k");
+        assert_ne!(CANDIDATE_ISSUER, Pubkey::new_unique());
+    }
     #[test] fn record_space_is_exact() { assert_eq!(CertificateRecord::SPACE, 82); assert_eq!(Config::SPACE, 41); }
     #[test] fn pda_is_stable_and_id_specific() {
         let a = Pubkey::find_program_address(&[b"certificate", &[1; 32]], &crate::ID);
