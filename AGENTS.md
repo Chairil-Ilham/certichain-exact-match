@@ -18,3 +18,4 @@
 - Anchor identity and frontend IDL must be generated from the actual deployment keypair; no default program ID is allowed.
 - Devnet operations use the Solana SDK, verify executable program/authority and account owner/discriminator before displaying evidence, and store confirmed transaction references only through the demo store.
 - Resolve `buffer` to the installed browser implementation only in Vite's client environment so Solana dependencies avoid empty browser stubs while SSR retains its native built-in.
+- Read candidate issuer identity from `config/issuer.json` in the frontend, operator scripts and Anchor build; keep it outside user wallet state to prevent configuration drift. Anchor initialization, issuance and revocation require the candidate signer, and revocation also checks config authority and original issuer.

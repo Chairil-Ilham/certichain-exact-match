@@ -4,6 +4,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { certificateHash, certificateSeed } from "./certificate-hash";
 import type { Certificate } from "./types";
+import { ISSUER_ADDRESS, requireIssuerCandidate } from "./issuer-config";
 
 export const discriminator = (name: string) => sha256(new TextEncoder().encode(name)).slice(0, 8);
 export const solanaConfigured = () => Boolean(import.meta.env['VITE_SOLANA_PROGRAM_ID']);
@@ -45,11 +46,13 @@ export async function verifyOnchain(c: Certificate): Promise<ChainResult> {
     if (!response.value.owner.equals(program)) throw new Error("Pemilik account tidak sesuai Program ID");
     const record = decodeRecord(response.value.data);
     if (record.bump !== bump) throw new Error("PDA bump tidak sesuai");
+    if (record.issuer !== ISSUER_ADDRESS) throw new Error("Penerbit account tidak sesuai kandidat issuer CertiChain");
     return { state: compareRecord(record, bytesToHex(certificateHash(c))), record, pda: pda.toBase58(), program: program.toBase58(), slot: response.context.slot, checkedAt: new Date().toISOString() };
   } catch (error) { return { state: "network_error", message: `${error instanceof Error ? error.message : "RPC tidak tersedia"}. Pemeriksaan belum berhasil; bukan berarti sertifikat tidak valid.` }; }
 }
 export interface ChainReference { certificateId: string; signature: string; pda: string; issuer: string; hash: string; program: string; network: "devnet"; confirmedAt: string; operation: "record" | "revoke" }
 export async function submitCertificate(c: Certificate, issuerAddress: string, sign: (tx: Transaction) => Promise<Transaction>, operation: "record" | "revoke", onStage: (stage: string) => void): Promise<ChainReference> {
+  requireIssuerCandidate(issuerAddress);
   const { connection, program } = configuration();
   onStage("Memeriksa jaringan dan otorisasi penerbit…");
   await requireDevnet(connection, program);
@@ -57,13 +60,13 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program);
   const config = await connection.getAccountInfo(configPda);
   if (!config || !config.owner.equals(program) || config.data.length !== 41 || !discriminator("account:Config").every((b, i) => config.data[i] === b) || !new PublicKey(config.data.subarray(8, 40)).equals(issuer)) throw new Error("Wallet tidak berwenang pada konfigurasi penerbit on-chain");
-  const [pda] = deriveCertificatePda(c, program);
+  const [pda, bump] = deriveCertificatePda(c, program);
   const hash = certificateHash(c);
   const name = operation === "record" ? "simpan_sertifikat" : "cabut_sertifikat";
   const keys = operation === "record" ? [
     { pubkey: issuer, isSigner: true, isWritable: true }, { pubkey: configPda, isSigner: false, isWritable: false },
     { pubkey: pda, isSigner: false, isWritable: true }, { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-  ] : [{ pubkey: issuer, isSigner: true, isWritable: true }, { pubkey: pda, isSigner: false, isWritable: true }];
+  ] : [{ pubkey: issuer, isSigner: true, isWritable: false }, { pubkey: configPda, isSigner: false, isWritable: false }, { pubkey: pda, isSigner: false, isWritable: true }];
   const data = Buffer.concat([Buffer.from(discriminator(`global:${name}`)), Buffer.from(certificateSeed(c)), ...(operation === "record" ? [Buffer.from(hash)] : [])]);
   const blockhash = await connection.getLatestBlockhash();
   const tx = new Transaction({ ...blockhash, feePayer: issuer }).add(new TransactionInstruction({ programId: program, keys, data }));
@@ -77,7 +80,7 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   const account = await connection.getAccountInfo(pda, { commitment: "confirmed", minContextSlot: confirmation.context.slot });
   if (!account || !account.owner.equals(program)) throw new Error("Transaksi dikonfirmasi tetapi account belum dapat diverifikasi. Periksa ulang; jangan kirim ulang otomatis.");
   const record = decodeRecord(account.data);
-  if (record.issuer !== issuerAddress || (operation === "record" && (record.hash !== bytesToHex(hash) || record.revoked)) || (operation === "revoke" && !record.revoked)) throw new Error("Account setelah transaksi tidak sesuai");
+  if (record.bump !== bump || record.issuer !== issuerAddress || (operation === "record" && (record.hash !== bytesToHex(hash) || record.revoked)) || (operation === "revoke" && !record.revoked)) throw new Error("Account setelah transaksi tidak sesuai");
   return { certificateId: c.id, signature, pda: pda.toBase58(), issuer: issuerAddress, hash: record.hash, program: program.toBase58(), network: "devnet", confirmedAt: new Date().toISOString(), operation };
 }
 export const explorerAccount = (pda: string) => `https://explorer.solana.com/address/${encodeURIComponent(pda)}?cluster=devnet`;

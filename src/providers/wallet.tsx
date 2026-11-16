@@ -3,6 +3,7 @@ import bs58 from "bs58";
 import type { Transaction } from "@solana/web3.js";
 import type { WalletState } from "@/lib/types";
 import { authConfigured, walletAuthRequest, type WalletAuthSession, type WalletChallenge } from "@/lib/wallet-auth-api";
+import { requireIssuerCandidate } from "@/lib/issuer-config";
 interface PhantomPublicKey { toString(): string }
 interface PhantomProvider {
   isPhantom?: boolean; publicKey: PhantomPublicKey | null; isConnected: boolean;
@@ -118,6 +119,9 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
     if (!provider?.isConnected || !authSession || authSession.publicKey !== provider.publicKey?.toString()) throw new Error("Autentikasi wallet diperlukan");
     const { session } = await walletAuthRequest<{ session: WalletAuthSession | null }>("session");
     if (!session || session.role !== "issuer" || session.publicKey !== provider.publicKey?.toString()) throw new Error("Wallet belum memiliki otorisasi penerbit");
+    requireIssuerCandidate(session.publicKey);
+    if (session.expiresAt <= Date.now()) throw new Error("Sesi penerbit kedaluwarsa");
+    if (tx.feePayer?.toBase58() !== session.publicKey) throw new Error("Wallet transaksi tidak sesuai penerbit");
     return provider.signTransaction(tx);
   }, [authSession]);
   const value = useMemo(() => ({ ...state, ready, loading, error, authSession, connect, authenticate, disconnect, signTransaction }), [state, ready, loading, error, authSession, connect, authenticate, disconnect, signTransaction]);

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog, PageHeader } from "@/components/app/bits";
 import { resetDemoData } from "@/lib/store";
+import { ISSUER_ADDRESS } from "@/lib/issuer-config";
+import { useWallet } from "@/providers/wallet";
 
 export const Route = createFileRoute("/admin/settings")({ head: () => pageHead("Pengaturan", "Status integrasi dan pengaturan data demo CertiChain."), component: Settings });
 
@@ -18,9 +20,19 @@ const STATUS = [
 
 function Settings() {
   const [open, setOpen] = useState(false);
+  const wallet = useWallet();
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader title="Pengaturan" />
+      <section className="border-b pb-6" aria-label="Konfigurasi issuer">
+        <h2 className="font-semibold">Wallet penerbit · Solana Devnet</h2>
+        <dl className="mt-4 space-y-3 text-sm">
+          <div><dt className="text-muted-foreground">Kandidat issuer resmi</dt><dd className="break-all font-mono">{ISSUER_ADDRESS}</dd></div>
+          <div><dt className="text-muted-foreground">Status otorisasi Solana</dt><dd>Belum aktif — build dan pengujian program belum selesai</dd></div>
+          <div><dt className="text-muted-foreground">Wallet pengguna terhubung</dt><dd className="break-all font-mono">{wallet.public_key ?? "Belum terhubung"}</dd></div>
+        </dl>
+        <p className="mt-3 text-xs text-muted-foreground">Alamat publik bukan bukti kepemilikan. Deployment belum dilakukan; Admin Demo tidak memberi izin penerbit.</p>
+      </section>
       <div className="rounded-xl border bg-card p-6 shadow-card">
         <h2 className="font-semibold">Status integrasi</h2>
         <dl className="mt-4 divide-y text-sm">
