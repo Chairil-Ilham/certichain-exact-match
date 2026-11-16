@@ -8,11 +8,16 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
+    plugins: [{
+      name: "certichain-browser-buffer",
+      configEnvironment(name) {
+        if (name !== "client") return;
+        // Include transitive SDK imports, without rewriting server built-ins.
+        return { resolve: { alias: { buffer: new URL("./node_modules/buffer/index.js", import.meta.url).pathname } } };
+      },
+    }],
     resolve: {
       alias: {
-        // Resolve Node's built-in name to the browser implementation for the SDK
-        // and its transitive dependencies (borsh, buffer-layout, safe-buffer).
-        buffer: new URL("./node_modules/buffer/index.js", import.meta.url).pathname,
         "rpc-websockets": new URL("./node_modules/rpc-websockets/dist/index.browser.mjs", import.meta.url).pathname,
       },
     },
