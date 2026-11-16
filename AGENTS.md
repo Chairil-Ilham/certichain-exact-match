@@ -17,3 +17,4 @@
 - Wallet signature authentication uses a separately deployed same-origin TTL service with serialized nonce consumption; without that service the app fails closed and never uses local demo sessions as issuer authority.
 - Anchor identity and frontend IDL must be generated from the actual deployment keypair; no default program ID is allowed.
 - Devnet operations use the Solana SDK, verify executable program/authority and account owner/discriminator before displaying evidence, and store confirmed transaction references only through the demo store.
+- Resolve `buffer` to the installed browser implementation in Vite so Solana and its transitive dependencies never receive an empty Node-builtin browser stub.

@@ -10,6 +10,9 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
+        // Resolve Node's built-in name to the browser implementation for the SDK
+        // and its transitive dependencies (borsh, buffer-layout, safe-buffer).
+        buffer: new URL("./node_modules/buffer/index.js", import.meta.url).pathname,
         "rpc-websockets": new URL("./node_modules/rpc-websockets/dist/index.browser.mjs", import.meta.url).pathname,
       },
     },

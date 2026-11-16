@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { certificateHashHex } from "@/lib/certificate-hash";
 import { decodeRecord, deriveCertificatePda, discriminator, compareRecord, verifyOnchain } from "@/lib/solana";
@@ -10,6 +10,14 @@ const c: Certificate = { id: "cert-1", verification_code: "CC-TEST-1234", studen
 const program = new PublicKey(new Uint8Array(32).fill(4));
 describe("Solana account verification", () => {
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+  it("initializes and serializes SDK instructions using Buffer", () => {
+    const transaction = new Transaction({ feePayer: program, recentBlockhash: program.toBase58() }).add(
+      SystemProgram.transfer({ fromPubkey: program, toPubkey: new PublicKey(new Uint8Array(32).fill(5)), lamports: 1 }),
+    );
+    expect(transaction.instructions[0]?.data.readBigUInt64LE(4)).toBe(1n);
+    expect(Transaction.from(transaction.serialize({ requireAllSignatures: false, verifySignatures: false })).instructions[0]?.data)
+      .toEqual(transaction.instructions[0]?.data);
+  });
   it("uses stable ID-derived PDA, independent of edited certificate hash", () => {
     expect(deriveCertificatePda(c, program)).toEqual(deriveCertificatePda({ ...c, certificate_name: "Edited" }, program));
     expect(deriveCertificatePda(c, program)[0].toBase58()).not.toBe(deriveCertificatePda({ ...c, id: "other" }, program)[0].toBase58());
