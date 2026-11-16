@@ -8,18 +8,18 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
-    plugins: [{
-      name: "certichain-browser-buffer",
-      configEnvironment(name) {
-        if (name !== "client") return;
-        // Include transitive SDK imports, without rewriting server built-ins.
-        return { resolve: { alias: { buffer: new URL("./node_modules/buffer/index.js", import.meta.url).pathname } } };
-      },
-    }],
     resolve: {
-      alias: {
-        "rpc-websockets": new URL("./node_modules/rpc-websockets/dist/index.browser.mjs", import.meta.url).pathname,
-      },
+      alias: [
+        {
+          find: /^buffer$/,
+          replacement: new URL("./node_modules/buffer/index.js", import.meta.url).pathname,
+          // The browser needs the npm implementation; SSR keeps its built-in.
+          customResolver(source, _importer, options) {
+            return options?.ssr ? "node:buffer" : source;
+          },
+        },
+        { find: "rpc-websockets", replacement: new URL("./node_modules/rpc-websockets/dist/index.browser.mjs", import.meta.url).pathname },
+      ],
     },
   },
   tanstackStart: {
