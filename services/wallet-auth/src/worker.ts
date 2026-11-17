@@ -1,4 +1,6 @@
 import { issueChallenge, consumeChallenge, randomToken, SESSION_TTL, walletRole, type Challenge, type WalletSession } from "./core";
+import { allowRequest, type RateEntry } from "./rate-limit";
+import issuerConfig from "../../../config/issuer.json";
 
 interface Storage {
   get<T>(key: string): Promise<T | undefined>;
@@ -47,38 +49,61 @@ export class WalletTTL {
     return this.state.blockConcurrencyWhile(async () => {
       const path = new URL(request.url).pathname;
       try {
-        if (request.method === "GET" && path.endsWith("/session")) {
+        const action = path.startsWith("/api/public/wallet/") ? path.slice("/api/public/wallet/".length) : path.startsWith("/auth/") ? path.slice("/auth/".length) : "";
+        if (!["session", "challenge", "verify", "logout"].includes(action)) return json({ error: "Endpoint tidak ditemukan" }, 404);
+        if (!await allowRequest(this.state.storage, request.headers.get("cf-connecting-ip") ?? "unknown")) {
+          const response = json({ error: "Terlalu banyak permintaan, coba lagi dalam satu menit" }, 429);
+          response.headers.set("Retry-After", "60");
+          return response;
+        }
+        await this.state.storage.setAlarm(Date.now() + 60000);
+        if (request.method === "GET" && action === "session") {
           const token = cookieToken(request);
           const session = token ? await this.state.storage.get<WalletSession>(await sessionKey(token)) : undefined;
           return json({ session: session && session.expiresAt > Date.now() ? { ...session, role: walletRole(session.publicKey, this.env.ISSUER_WALLETS ?? "") } : null });
         }
         if (request.method !== "POST") return json({ error: "Metode tidak didukung" }, 405);
-        if (path.endsWith("/logout")) {
+        if (action === "logout") {
           const token = cookieToken(request);
           if (token) await this.state.storage.delete(await sessionKey(token));
           return json({ ok: true }, 200, cookie("", 0));
         }
-        const body = await request.text();
-        if (body.length > 4096) return json({ error: "Permintaan terlalu besar" }, 413);
+        const reader = request.body?.getReader();
+        if (!reader) return json({ error: "Permintaan kosong" }, 400);
+        const chunks: Uint8Array[] = []; let size = 0;
+        while (true) {
+          const chunk = await reader.read(); if (chunk.done) break;
+          size += chunk.value.byteLength;
+          if (size > 4096) { await reader.cancel(); return json({ error: "Permintaan terlalu besar" }, 413); }
+          chunks.push(chunk.value);
+        }
+        const bytes = new Uint8Array(size); let offset = 0;
+        for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+        const body = new TextDecoder().decode(bytes);
         const input = JSON.parse(body) as Record<string, unknown>;
-        if (path.endsWith("/challenge")) {
+        if (!input || typeof input !== "object" || Array.isArray(input)) return json({ error: "Permintaan tidak valid" }, 400);
+        if (action === "challenge") {
           if (typeof input['publicKey'] !== "string" || input['publicKey'].length > 50) return json({ error: "Alamat tidak valid" }, 400);
           await this.alarm();
           const entries = await this.state.storage.list({ prefix: "nonce:" });
           if (entries.size >= 1000) return json({ error: "Terlalu banyak permintaan, coba lagi nanti" }, 429);
-          const challenge = await issueChallenge(this.state.storage, input['publicKey'], new URL(this.env.APP_ORIGIN).origin);
+          const purpose = input['purpose'] ?? "login";
+          if (purpose !== "login" && purpose !== "issuer-ownership") return json({ error: "Tujuan challenge tidak valid" }, 400);
+          if (purpose === "issuer-ownership" && input['publicKey'] !== issuerConfig.publicAddress) return json({ error: "Wallet bukan kandidat penerbit" }, 403);
+          const challenge = await issueChallenge(this.state.storage, input['publicKey'], new URL(this.env.APP_ORIGIN).origin, Date.now(), purpose);
           await this.state.storage.setAlarm(Date.now() + 60000);
           return json({ challenge });
         }
-        if (path.endsWith("/verify")) {
+        if (action === "verify") {
           const { nonce, publicKey, message, signature } = input;
           if (![nonce, publicKey, message, signature].every(x => typeof x === "string")) return json({ error: "Challenge tidak lengkap" }, 400);
           if (typeof nonce !== "string" || typeof publicKey !== "string" || typeof message !== "string" || typeof signature !== "string") return json({ error: "Challenge tidak lengkap" }, 400);
+          const original = await this.state.storage.get<Challenge>(`nonce:${nonce}`);
           const verifiedKey = await consumeChallenge(this.state.storage, { nonce, publicKey, message, signature }, new URL(this.env.APP_ORIGIN).origin);
           const previous = cookieToken(request);
           if (previous) await this.state.storage.delete(await sessionKey(previous));
           const token = randomToken();
-          const session: WalletSession = { publicKey: verifiedKey, role: walletRole(verifiedKey, this.env.ISSUER_WALLETS ?? ""), expiresAt: Date.now() + SESSION_TTL };
+          const session: WalletSession = { publicKey: verifiedKey, role: walletRole(verifiedKey, this.env.ISSUER_WALLETS ?? ""), ownershipVerified: original?.purpose === "issuer-ownership" && verifiedKey === issuerConfig.publicAddress, expiresAt: Date.now() + SESSION_TTL };
           await this.state.storage.put(await sessionKey(token), session);
           await this.state.storage.setAlarm(Date.now() + 60000);
           return json({ session }, 200, cookie(token, SESSION_TTL / 1000));
