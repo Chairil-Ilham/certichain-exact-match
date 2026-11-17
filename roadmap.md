@@ -1,4 +1,8 @@
 # CertiChain continuation
+- [ ] Finalization phase 1: audit existing source and preserve demo records.
+- [ ] Finalization phases 2–3: harden TTL authentication, account-change handling and explicit issuer ownership proof.
+- [ ] Finalization phases 4–6: strengthen Anchor validation/test source, hash conversion and verified frontend evidence.
+- [ ] Finalization phases 9–10: run available tests/browser flows; document Windows operator commands and actual blockers.
 - [x] Configure candidate issuer, enforce Anchor signer checks, add identity tests, and write pre-deployment report without changing demo data (38 offline tests; no Solana activation claim).
 - [x] Canonical SHA-256 hashing and rule tests.
 - [x] Wallet lifecycle and signature-authentication core; fail closed without reliable shared TTL service.
