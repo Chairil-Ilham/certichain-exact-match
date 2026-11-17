@@ -35,8 +35,7 @@ pub mod certichain {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(mut)]
-    #[account(address = CANDIDATE_ISSUER @ CertiChainError::Unauthorized)]
+    #[account(mut, address = CANDIDATE_ISSUER @ CertiChainError::Unauthorized)]
     pub authority: Signer<'info>,
     #[account(init, payer = authority, space = Config::SPACE, seeds = [b"config"], bump)]
     pub config: Account<'info, Config>,
