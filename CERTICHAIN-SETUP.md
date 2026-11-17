@@ -37,14 +37,14 @@ No invented Program ID or deployment wallet is included. `build.rs` requires `CE
 Operator workflow, requiring Anchor 0.31.1, compatible Solana CLI/SBF toolchain, a funded Devnet upgrade-authority wallet and an actual program keypair:
 
 1. Create the deployment keypair outside source control with `solana-keygen new --outfile solana/target/deploy/certichain-keypair.json` (never upload it or commit it).
-2. Run `node scripts/configure-solana.mjs solana/target/deploy/certichain-keypair.json`. This only derives the public program identity; it does not deploy.
+2. On the operator machine, run `node scripts/configure-solana.mjs solana/target/deploy/certichain-keypair.json /secure/external/issuer.json`. The existing issuer signing wallet must match the candidate. Never upload it to Lovable or copy it into source. A local signature check is not Solana authorization. The program keypair is separate from the issuer signing wallet.
 3. Export `CERTICHAIN_PROGRAM_ID` to that public identity, then run `anchor build` from `solana/`.
 4. Run `node scripts/export-idl.mjs` from the project root. The **actual generated IDL** is emitted into `solana/idl/certichain.json`; no fabricated generated IDL is shipped.
-5. Deploy the program on Devnet using the configured operator wallet. Read its executable account from Devnet to confirm deployment.
-6. Call `initialize` using the program's upgrade authority and its real `ProgramData` PDA. Initialization rejects arbitrary first callers. The config's issuer is that upgrade authority. No frontend-provided role can bypass it.
+5. Before Devnet deployment, complete a successful Anchor build and execute the validator integration below on a fresh local validator. Only then deploy the tested binary using the verified candidate signing wallet as payer and upgrade authority. Read executable and ProgramData authority accounts from Devnet.
+6. Call `initialize` using the program's upgrade authority and its real `ProgramData` PDA. Initialization rejects arbitrary first callers. Both the signer and upgrade authority must equal the configured candidate. The config's issuer is that authority. No frontend-provided role can bypass it.
 7. Set app `VITE_SOLANA_PROGRAM_ID` to the deployed address, and optionally `VITE_SOLANA_RPC_URL` to a public **Devnet** RPC endpoint. Never put an RPC private API key in `VITE_*`.
 8. Align the temporary-auth service issuer allowlist with the on-chain config issuer.
-9. Before live usage, run `solana/tests/validator.mjs` against a deployed local validator using `ISSUER_KEYPAIR` and the generated IDL. It requires `@coral-xyz/anchor` in the project, only needed for operator integration tests. This test was not executed here because no Anchor/Solana CLI/deployment identity is provided.
+9. Before Devnet deployment, run `solana/tests/validator.mjs` against a deployed local validator using `ISSUER_KEYPAIR` and the generated IDL. It requires `@coral-xyz/anchor` in the project, only needed for operator integration tests. This test was not executed here because no Anchor/Solana CLI/deployment identity is provided.
 
 Program accounts: Config = 41 bytes including discriminator; CertificateRecord = 82 bytes including discriminator. Anchor `init` with payer and exact space handles rent-exemption. Certificate PDA seeds are UTF-8 `certificate` and SHA-256 of normalized internal certificate ID. No names, NIM or description are sent on-chain. Issuer authorization uses on-chain config; duplicate PDA initialization fails; only original issuer revokes; record remains after revocation.
 
@@ -59,3 +59,6 @@ The frontend verifies Devnet genesis hash, executable program, PDA owner, accoun
 ## Tests
 
 Run `bunx vitest run`. The Lovable harness automatically checks and builds the app; do not manually duplicate its builds. Real Phantom signatures, actual deployed TTL-service behavior, generated IDL, Anchor compilation, local validator and Devnet transactions remain separate operator verification requirements.
+## Candidate issuer configuration
+
+See `CERTICHAIN-ISSUER-REPORT.md` for the candidate public address, verification status, and mandatory pre-deployment checklist. `config/issuer.json` is shared public configuration, not activation evidence. Temporary wallet authentication remains disabled; set its trusted `ISSUER_WALLETS` to the same candidate only after successful program authorization tests. Never store private material in project files.

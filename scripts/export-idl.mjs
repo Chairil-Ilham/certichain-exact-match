@@ -1,6 +1,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { issuerConfig } from "./issuer-identity.mjs";
 const idl = JSON.parse(readFileSync("solana/target/idl/certichain.json", "utf8"));
 if (!idl.address || !idl.instructions?.length) throw new Error("Generate the Anchor IDL from the configured build first.");
+const revoke = idl.instructions.find(i => i.name === "cabut_sertifikat" || i.name === "cabutSertifikat");
+if (revoke?.accounts.map(a => a.name).join(",") !== "issuer,config,record") throw new Error("Rebuild Anchor: revocation ABI is outdated.");
+const initialize = idl.instructions.find(i => i.name === "initialize");
+if (initialize?.accounts.find(a => a.name === "authority")?.address !== issuerConfig.publicAddress) throw new Error("Rebuild Anchor: issuer constraint missing from IDL.");
 mkdirSync("solana/idl", { recursive: true });
 writeFileSync("solana/idl/certichain.json", JSON.stringify(idl, null, 2));
 console.log(`IDL exported for ${idl.address}. Verify deployment before setting VITE_SOLANA_PROGRAM_ID.`);
