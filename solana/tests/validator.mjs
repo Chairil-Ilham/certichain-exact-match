@@ -2,7 +2,7 @@
 // Never runs against Devnet unless the operator explicitly sets RPC_URL.
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
-import { AnchorProvider, Program, Wallet, BN } from "@coral-xyz/anchor";
+import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { loadVerifiedIssuer, issuerConfig } from "../../scripts/issuer-identity.mjs";
 import { createHash } from "node:crypto";
@@ -25,29 +25,30 @@ assert.equal(new PublicKey(deployment.data.subarray(13, 45)).toBase58(), issuerC
 const other = Keypair.generate();
 await provider.sendAndConfirm(new Transaction().add(SystemProgram.transfer({ fromPubkey: issuer.publicKey, toPubkey: other.publicKey, lamports: 10000000 })));
 const otherProgram = new Program(idl, new AnchorProvider(connection, new Wallet(other), { commitment: "confirmed" }));
+const unauthorized = error => error?.error?.errorCode?.code === "Unauthorized";
 if (!(await connection.getAccountInfo(config))) {
-  await assert.rejects(otherProgram.methods.initialize().accounts({ authority: other.publicKey, config, program: program.programId, programData, systemProgram: SystemProgram.programId }).rpc());
+  await assert.rejects(otherProgram.methods.initialize().accountsStrict({ authority: other.publicKey, config, program: program.programId, programData, systemProgram: SystemProgram.programId }).rpc(), unauthorized);
   assert.equal(await connection.getAccountInfo(config), null);
 }
-if (!(await connection.getAccountInfo(config))) await program.methods.initialize().accounts({ authority: issuer.publicKey, config, program: program.programId, programData, systemProgram: SystemProgram.programId }).rpc();
+if (!(await connection.getAccountInfo(config))) await program.methods.initialize().accountsStrict({ authority: issuer.publicKey, config, program: program.programId, programData, systemProgram: SystemProgram.programId }).rpc();
 assert.equal((await program.account.config.fetch(config)).authority.toBase58(), issuerConfig.publicAddress);
 const seed = [...createHash("sha256").update(`integration-${Date.now()}`).digest()];
 const hash = [...createHash("sha256").update("synthetic test certificate").digest()];
 const [record] = PublicKey.findProgramAddressSync([Buffer.from("certificate"), Buffer.from(seed)], program.programId);
-await program.methods.simpanSertifikat(seed, hash).accounts({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc();
+await program.methods.simpanSertifikat(seed, hash).accountsStrict({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc();
 const stored = await program.account.certificateRecord.fetch(record);
 assert.deepEqual(stored.certificateHash, hash); assert.equal(stored.issuer.toBase58(), issuer.publicKey.toBase58()); assert.equal(stored.revoked, false);
 assert.equal((await connection.getAccountInfo(record)).data.length, 82);
-await program.methods.verifikasiSertifikat(seed, hash).accounts({ record }).rpc();
-await assert.rejects(program.methods.simpanSertifikat(seed, hash).accounts({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc());
+await program.methods.verifikasiSertifikat(seed, hash).accountsStrict({ record }).rpc();
+await assert.rejects(program.methods.simpanSertifikat(seed, hash).accountsStrict({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc());
 
-await assert.rejects(otherProgram.methods.cabutSertifikat(seed).accounts({ issuer: other.publicKey, config, record }).rpc());
+await assert.rejects(otherProgram.methods.cabutSertifikat(seed).accountsStrict({ issuer: other.publicKey, config, record }).rpc(), unauthorized);
 assert.equal((await program.account.certificateRecord.fetch(record)).revoked, false);
 const wrongSeed = [...createHash("sha256").update("unauthorized certificate").digest()];
 const [wrongRecord] = PublicKey.findProgramAddressSync([Buffer.from("certificate"), Buffer.from(wrongSeed)], program.programId);
-await assert.rejects(otherProgram.methods.simpanSertifikat(wrongSeed, hash).accounts({ issuer: other.publicKey, config, record: wrongRecord, systemProgram: SystemProgram.programId }).rpc());
+await assert.rejects(otherProgram.methods.simpanSertifikat(wrongSeed, hash).accountsStrict({ issuer: other.publicKey, config, record: wrongRecord, systemProgram: SystemProgram.programId }).rpc(), unauthorized);
 assert.equal(await connection.getAccountInfo(wrongRecord), null);
-await program.methods.cabutSertifikat(seed).accounts({ issuer: issuer.publicKey, config, record }).rpc();
+await program.methods.cabutSertifikat(seed).accountsStrict({ issuer: issuer.publicKey, config, record }).rpc();
 assert.equal((await program.account.certificateRecord.fetch(record)).revoked, true);
-await assert.rejects(program.methods.verifikasiSertifikat(seed, hash).accounts({ record }).rpc());
+await assert.rejects(program.methods.verifikasiSertifikat(seed, hash).accountsStrict({ record }).rpc());
 console.log("Validator integration passed: issue, read PDA, verify, duplicate rejection, unauthorized rejection, revoke and retained evidence.");
