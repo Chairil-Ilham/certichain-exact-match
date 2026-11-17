@@ -3,8 +3,9 @@ import { ed25519 } from "@noble/curves/ed25519.js";
 
 export const CHALLENGE_TTL = 5 * 60 * 1000;
 export const SESSION_TTL = 60 * 60 * 1000;
-export interface Challenge { nonce: string; publicKey: string; domain: string; issuedAt: number; expiresAt: number; message: string }
-export interface WalletSession { publicKey: string; role: "issuer" | "wallet"; expiresAt: number }
+export type ChallengePurpose = "login" | "issuer-ownership";
+export interface Challenge { nonce: string; publicKey: string; domain: string; purpose?: ChallengePurpose; issuedAt: number; expiresAt: number; message: string }
+export interface WalletSession { publicKey: string; role: "issuer" | "wallet"; expiresAt: number; ownershipVerified?: boolean }
 export interface TemporaryStore {
   get<T>(key: string): Promise<T | undefined>;
   put<T>(key: string, value: T): Promise<void>;
@@ -14,11 +15,12 @@ export function randomToken(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, "0")).join("");
 }
 export function challengeMessage(c: Omit<Challenge, "message">): string {
-  return `${c.domain} meminta autentikasi CertiChain.\nWallet: ${c.publicKey}\nTujuan: Login wallet CertiChain (bukan transaksi)\nDibuat: ${new Date(c.issuedAt).toISOString()}\nKedaluwarsa: ${new Date(c.expiresAt).toISOString()}\nNonce: ${c.nonce}`;
+  const purpose = c.purpose === "issuer-ownership" ? "Buktikan kepemilikan kandidat penerbit CertiChain (bukan aktivasi atau transaksi)" : "Login wallet CertiChain (bukan transaksi)";
+  return `${c.domain} meminta autentikasi CertiChain.\nWallet: ${c.publicKey}\nTujuan: ${purpose}\nDibuat: ${new Date(c.issuedAt).toISOString()}\nKedaluwarsa: ${new Date(c.expiresAt).toISOString()}\nNonce: ${c.nonce}`;
 }
-export async function issueChallenge(store: TemporaryStore, publicKey: string, domain: string, now = Date.now()): Promise<Challenge> {
+export async function issueChallenge(store: TemporaryStore, publicKey: string, domain: string, now = Date.now(), purpose: ChallengePurpose = "login"): Promise<Challenge> {
   if (bs58.decode(publicKey).length !== 32) throw new Error("Alamat wallet tidak valid");
-  const base = { nonce: randomToken(), publicKey, domain, issuedAt: now, expiresAt: now + CHALLENGE_TTL };
+  const base = { nonce: randomToken(), publicKey, domain, purpose, issuedAt: now, expiresAt: now + CHALLENGE_TTL };
   const challenge = { ...base, message: challengeMessage(base) };
   await store.put(`nonce:${challenge.nonce}`, challenge);
   return challenge;

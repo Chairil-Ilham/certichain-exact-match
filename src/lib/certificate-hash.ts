@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import type { Certificate } from "./types";
 
 /** Versioned fixed-order UTF-8 JSON. Initial issuance status is always valid;
@@ -23,6 +23,10 @@ export function certificateHash(c: Certificate): Uint8Array {
 }
 export function certificateHashHex(c: Certificate): string {
   return bytesToHex(certificateHash(c));
+}
+export function certificateHashBytes(hex: string): Uint8Array {
+  if (!/^[a-fA-F0-9]{64}$/.test(hex)) throw new Error("Hash sertifikat harus tepat 64 karakter hexadecimal");
+  return hexToBytes(hex);
 }
 export function certificateSeed(c: Pick<Certificate, "id">): Uint8Array {
   return sha256(new TextEncoder().encode(c.id.normalize("NFC")));
