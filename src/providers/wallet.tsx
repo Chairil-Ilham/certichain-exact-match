@@ -23,7 +23,7 @@ function getProvider(): PhantomProvider | null {
 }
 interface WalletCtx extends WalletState {
   ready: boolean; error: string | null; loading: boolean; authSession: WalletAuthSession | null;
-  connect: () => Promise<void>; authenticate: () => Promise<void>; disconnect: () => Promise<void>;
+  connect: () => Promise<void>; authenticate: () => Promise<void>; verifyOwnership: () => Promise<void>; disconnect: () => Promise<void>;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
 }
 const Ctx = createContext<WalletCtx | null>(null);
@@ -37,6 +37,8 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
   const [authSession, setAuthSession] = useState<WalletAuthSession | null>(null);
   const providerRef = useRef<PhantomProvider | null>(null);
   const generation = useRef(0);
+  const authenticateRef = useRef<() => Promise<void>>(async () => {});
+  const authBusy = useRef(false);
   const clearAuth = useCallback(async () => {
     generation.current++;
     setAuthSession(null);
@@ -53,7 +55,11 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
         if (pk && !disposed) setState(s => ({ ...s, public_key: pk.toString(), connection_status: "connected", connected_at: s.connected_at ?? new Date().toISOString() }));
       };
       const onDisconnect = () => { if (!disposed) { setState(empty); void clearAuth(); } };
-      const onAccount = (pk?: PhantomPublicKey | null) => { void clearAuth(); if (pk) onConnect(pk); else onDisconnect(); };
+      const onAccount = (pk?: PhantomPublicKey | null) => {
+        if (!pk) { onDisconnect(); return; }
+        onConnect(pk);
+        void clearAuth().then(async () => { if (!disposed && provider.publicKey?.toString() === pk.toString()) await authenticateRef.current(); });
+      };
       provider.on("connect", onConnect); provider.on("disconnect", onDisconnect); provider.on("accountChanged", onAccount);
       cleanup = () => { for (const [event, cb] of [["connect", onConnect], ["disconnect", onDisconnect], ["accountChanged", onAccount]] as const) { if (provider.removeListener) provider.removeListener(event, cb); else provider.off?.(event, cb); } };
       try {
@@ -83,13 +89,16 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
     const expiry = setTimeout(() => void clearAuth(), Math.max(0, authSession.expiresAt - Date.now()));
     return () => { clearInterval(timer); clearTimeout(expiry); };
   }, [authSession, clearAuth]);
-  const authenticate = useCallback(async () => {
+  const authenticateFor = useCallback(async (purpose: "login" | "issuer-ownership") => {
     const provider = providerRef.current; const pk = provider?.publicKey?.toString();
-    if (!provider || !pk) return;
+    if (!provider || !pk || authBusy.current) return;
+    authBusy.current = true;
     setLoading(true); setError(null); const epoch = generation.current;
     try {
-      const { challenge } = await walletAuthRequest<{ challenge: WalletChallenge }>("challenge", { publicKey: pk });
-      if (challenge.publicKey !== pk || challenge.domain !== window.location.origin || challenge.expiresAt <= Date.now()) throw new Error("Challenge tidak sesuai domain atau wallet");
+      if (purpose === "issuer-ownership") requireIssuerCandidate(pk);
+      const { challenge } = await walletAuthRequest<{ challenge: WalletChallenge }>("challenge", { publicKey: pk, purpose });
+      if (epoch !== generation.current || provider.publicKey?.toString() !== pk) return;
+      if (challenge.publicKey !== pk || challenge.domain !== window.location.origin || challenge.purpose !== purpose || challenge.issuedAt > Date.now() || challenge.expiresAt <= Date.now() || challenge.expiresAt - challenge.issuedAt > 300000) throw new Error("Challenge tidak sesuai domain atau wallet");
       const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), "utf8");
       if (epoch !== generation.current || provider.publicKey?.toString() !== pk) return;
       const { session } = await walletAuthRequest<{ session: WalletAuthSession }>("verify", { ...challenge, signature: bs58.encode(signed.signature) });
@@ -97,8 +106,11 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
       if (session.publicKey !== pk || session.expiresAt <= Date.now()) throw new Error("Sesi wallet tidak sesuai");
       setAuthSession(session); setState(s => ({ ...s, backend_authenticated: true }));
     } catch (e) { setError(e instanceof Error ? e.message : "Autentikasi ditolak"); }
-    finally { setLoading(false); }
+    finally { authBusy.current = false; setLoading(false); }
   }, [clearAuth]);
+  const authenticate = useCallback(() => authenticateFor("login"), [authenticateFor]);
+  const verifyOwnership = useCallback(() => authenticateFor("issuer-ownership"), [authenticateFor]);
+  useEffect(() => { authenticateRef.current = authenticate; }, [authenticate]);
   const connect = useCallback(async () => {
     setError(null); const provider = providerRef.current ?? getProvider();
     if (!provider) { setState(s => ({ ...s, connection_status: "unavailable" })); return; }
@@ -118,13 +130,13 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
     const provider = providerRef.current;
     if (!provider?.isConnected || !authSession || authSession.publicKey !== provider.publicKey?.toString()) throw new Error("Autentikasi wallet diperlukan");
     const { session } = await walletAuthRequest<{ session: WalletAuthSession | null }>("session");
-    if (!session || session.role !== "issuer" || session.publicKey !== provider.publicKey?.toString()) throw new Error("Wallet belum memiliki otorisasi penerbit");
+    if (!session || session.role !== "issuer" || !session.ownershipVerified || session.publicKey !== provider.publicKey?.toString()) throw new Error("Wallet belum memiliki otorisasi penerbit");
     requireIssuerCandidate(session.publicKey);
     if (session.expiresAt <= Date.now()) throw new Error("Sesi penerbit kedaluwarsa");
     if (tx.feePayer?.toBase58() !== session.publicKey) throw new Error("Wallet transaksi tidak sesuai penerbit");
     return provider.signTransaction(tx);
   }, [authSession]);
-  const value = useMemo(() => ({ ...state, ready, loading, error, authSession, connect, authenticate, disconnect, signTransaction }), [state, ready, loading, error, authSession, connect, authenticate, disconnect, signTransaction]);
+  const value = useMemo(() => ({ ...state, ready, loading, error, authSession, connect, authenticate, verifyOwnership, disconnect, signTransaction }), [state, ready, loading, error, authSession, connect, authenticate, verifyOwnership, disconnect, signTransaction]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const WalletProvider = WalletAuthProvider;

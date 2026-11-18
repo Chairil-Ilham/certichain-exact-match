@@ -1,28 +1,32 @@
 import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Buffer } from "buffer";
-import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { certificateHash, certificateSeed } from "./certificate-hash";
 import type { Certificate } from "./types";
 import { ISSUER_ADDRESS, requireIssuerCandidate } from "./issuer-config";
+import { discriminator } from "./solana-discriminator";
+import { requireAnchorIdl } from "./anchor-program";
 
-export const discriminator = (name: string) => sha256(new TextEncoder().encode(name)).slice(0, 8);
+export { discriminator };
 export const solanaConfigured = () => Boolean(import.meta.env['VITE_SOLANA_PROGRAM_ID']);
 function configuration() {
   const id = import.meta.env['VITE_SOLANA_PROGRAM_ID'];
   if (!id) throw new Error("Program Solana belum dideploy atau Program ID belum dikonfigurasi.");
+  requireAnchorIdl(id);
   const rpc = import.meta.env['VITE_SOLANA_RPC_URL'] ?? "https://api.devnet.solana.com";
   return { program: new PublicKey(id), connection: new Connection(rpc, { commitment: "confirmed", fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(20000) }) }) };
 }
 export function deriveCertificatePda(c: Certificate, program: PublicKey) {
   return PublicKey.findProgramAddressSync([Buffer.from("certificate"), Buffer.from(certificateSeed(c))], program);
 }
-export interface OnchainRecord { hash: string; issuer: string; createdAt: number; revoked: boolean; bump: number }
+export interface OnchainRecord { hash: string; issuer: string; createdAt: number; revoked: boolean; bump: number; certificateSeed: string }
 export function decodeRecord(data: Uint8Array): OnchainRecord {
-  if (data.length !== 82 || !discriminator("account:CertificateRecord").every((b, i) => data[i] === b)) throw new Error("Account sertifikat tidak sesuai program");
+  if (data.length !== 114 || !discriminator("account:CertificateRecord").every((b, i) => data[i] === b)) throw new Error("Account sertifikat tidak sesuai program");
   if (data[80] !== 0 && data[80] !== 1) throw new Error("Status account tidak valid");
   const buffer = Buffer.from(data);
-  return { hash: bytesToHex(data.slice(8, 40)), issuer: new PublicKey(data.slice(40, 72)).toBase58(), createdAt: Number(buffer.readBigInt64LE(72)), revoked: data[80] === 1, bump: data[81] ?? 0 };
+  const createdAt = Number(buffer.readBigInt64LE(72));
+  if (!Number.isSafeInteger(createdAt) || createdAt < 0 || createdAt > 8640000000000) throw new Error("Timestamp account tidak valid");
+  return { hash: bytesToHex(data.slice(8, 40)), issuer: new PublicKey(data.slice(40, 72)).toBase58(), createdAt, revoked: data[80] === 1, bump: data[81] ?? 0, certificateSeed: bytesToHex(data.slice(82, 114)) };
 }
 export type ChainResult =
   | { state: "unconfigured" | "not_found" | "network_error"; message: string }
@@ -45,7 +49,7 @@ export async function verifyOnchain(c: Certificate): Promise<ChainResult> {
     if (!response.value) return { state: "not_found", message: "Data on-chain tidak ditemukan pada PDA sertifikat di Devnet." };
     if (!response.value.owner.equals(program)) throw new Error("Pemilik account tidak sesuai Program ID");
     const record = decodeRecord(response.value.data);
-    if (record.bump !== bump) throw new Error("PDA bump tidak sesuai");
+    if (record.bump !== bump || record.certificateSeed !== bytesToHex(certificateSeed(c))) throw new Error("PDA identifier atau bump tidak sesuai");
     if (record.issuer !== ISSUER_ADDRESS) throw new Error("Penerbit account tidak sesuai kandidat issuer CertiChain");
     return { state: compareRecord(record, bytesToHex(certificateHash(c))), record, pda: pda.toBase58(), program: program.toBase58(), slot: response.context.slot, checkedAt: new Date().toISOString() };
   } catch (error) { return { state: "network_error", message: `${error instanceof Error ? error.message : "RPC tidak tersedia"}. Pemeriksaan belum berhasil; bukan berarti sertifikat tidak valid.` }; }
@@ -57,9 +61,9 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   onStage("Memeriksa jaringan dan otorisasi penerbit…");
   await requireDevnet(connection, program);
   const issuer = new PublicKey(issuerAddress);
-  const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program);
+  const [configPda, configBump] = PublicKey.findProgramAddressSync([Buffer.from("config")], program);
   const config = await connection.getAccountInfo(configPda);
-  if (!config || !config.owner.equals(program) || config.data.length !== 41 || !discriminator("account:Config").every((b, i) => config.data[i] === b) || !new PublicKey(config.data.subarray(8, 40)).equals(issuer)) throw new Error("Wallet tidak berwenang pada konfigurasi penerbit on-chain");
+  if (!config || !config.owner.equals(program) || config.data.length !== 41 || config.data[40] !== configBump || !discriminator("account:Config").every((b, i) => config.data[i] === b) || !new PublicKey(config.data.subarray(8, 40)).equals(issuer)) throw new Error("Wallet tidak berwenang pada konfigurasi penerbit on-chain");
   const [pda, bump] = deriveCertificatePda(c, program);
   const hash = certificateHash(c);
   const name = operation === "record" ? "simpan_sertifikat" : "cabut_sertifikat";
@@ -80,7 +84,7 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   const account = await connection.getAccountInfo(pda, { commitment: "confirmed", minContextSlot: confirmation.context.slot });
   if (!account || !account.owner.equals(program)) throw new Error("Transaksi dikonfirmasi tetapi account belum dapat diverifikasi. Periksa ulang; jangan kirim ulang otomatis.");
   const record = decodeRecord(account.data);
-  if (record.bump !== bump || record.issuer !== issuerAddress || (operation === "record" && (record.hash !== bytesToHex(hash) || record.revoked)) || (operation === "revoke" && !record.revoked)) throw new Error("Account setelah transaksi tidak sesuai");
+  if (record.bump !== bump || record.certificateSeed !== bytesToHex(certificateSeed(c)) || record.issuer !== issuerAddress || record.hash !== bytesToHex(hash) || (operation === "record" && record.revoked) || (operation === "revoke" && !record.revoked)) throw new Error("Account setelah transaksi tidak sesuai");
   return { certificateId: c.id, signature, pda: pda.toBase58(), issuer: issuerAddress, hash: record.hash, program: program.toBase58(), network: "devnet", confirmedAt: new Date().toISOString(), operation };
 }
 export const explorerAccount = (pda: string) => `https://explorer.solana.com/address/${encodeURIComponent(pda)}?cluster=devnet`;

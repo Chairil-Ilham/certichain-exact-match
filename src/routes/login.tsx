@@ -13,6 +13,7 @@ import { listStudents } from "@/lib/store";
 import { useData } from "@/lib/use-data";
 import { matchesQuery, shortAddress } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { isIssuerCandidate } from "@/lib/issuer-config";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -50,7 +51,7 @@ function PhantomCard() {
     <div className="rounded-xl border bg-card p-6 shadow-card">
       <span className="grid size-11 place-items-center rounded-xl bg-accent text-primary"><Wallet className="size-5" /></span>
       <h2 className="mt-4 text-xl font-semibold">Masuk dengan Phantom</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Hubungkan wallet Solana Anda. Aplikasi hanya membaca alamat publik — tidak pernah meminta seed phrase atau private key.</p>
+      <p className="mt-1 text-sm text-muted-foreground">Hubungkan wallet Solana dan verifikasi tanda tangan untuk masuk — tidak pernah meminta seed phrase atau private key.</p>
 
       <div className="mt-5 rounded-lg border bg-background p-4">
         <p className="text-xs text-muted-foreground">Status koneksi</p>
@@ -84,7 +85,9 @@ function PhantomCard() {
           </Button>
         )}
         {w.connection_status === "connected" && !w.backend_authenticated && <Button variant="outline" disabled={w.loading} onClick={() => void w.authenticate()}>{w.loading ? <Loader2 className="animate-spin" /> : <ShieldAlert />} Verifikasi tanda tangan</Button>}
+        {w.connection_status === "connected" && isIssuerCandidate(w.public_key) && !w.authSession?.ownershipVerified && <Button variant="outline" disabled={w.loading} onClick={() => void w.verifyOwnership()}><ShieldAlert /> Buktikan kepemilikan penerbit</Button>}
       </div>
+      {isIssuerCandidate(w.public_key) && <p className="mt-3 text-sm">Status penerbit: {w.authSession?.ownershipVerified ? "Kepemilikan terverifikasi — belum berarti issuer aktif" : "Kandidat — kepemilikan belum terverifikasi"}</p>}
       <p className="mt-4 flex gap-2 text-xs text-muted-foreground">
         <ShieldAlert className="size-4 shrink-0" />
         {w.backend_authenticated ? `Autentikasi Terverifikasi. ${w.authSession?.role === "issuer" ? "Wallet memiliki konfigurasi penerbit; izin transaksi tetap diperiksa on-chain." : "Wallet belum memiliki role administratif."}` : "Wallet terhubung belum berarti autentikasi. Verifikasi tanda tangan memerlukan layanan sementara yang dikonfigurasi; tidak menggunakan sesi demo sebagai otorisasi."}
@@ -126,11 +129,11 @@ function StudentDemoCard() {
         {data.status === "error" && <p className="p-4 text-sm text-destructive">{data.error}</p>}
         {data.status === "ready" && results.length === 0 && <p className="p-4 text-center text-sm text-muted-foreground">Mahasiswa tidak ditemukan</p>}
         {results.map((s) => (
-          <button key={s.id} type="button" role="option" aria-selected={s.id === selectedId} onClick={() => setSelectedId(s.id)}
+          <Button key={s.id} type="button" variant="ghost" role="option" aria-selected={s.id === selectedId} onClick={() => setSelectedId(s.id)}
             className={cn("flex w-full items-center justify-between gap-3 border-b px-3 py-2.5 text-left text-sm last:border-b-0 hover:bg-muted", s.id === selectedId && "bg-accent")}>
             <span><span className="font-medium">{s.nama}</span><span className="block text-xs text-muted-foreground">{s.program_studi}</span></span>
             <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">{s.nim}{s.id === selectedId && <Check className="size-4 text-primary" />}</span>
-          </button>
+          </Button>
         ))}
       </div>
 

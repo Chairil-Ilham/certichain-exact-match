@@ -1,17 +1,19 @@
 // Run against a deployed local validator with the real generated IDL.
 // Never runs against Devnet unless the operator explicitly sets RPC_URL.
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { loadVerifiedIssuer, issuerConfig } from "../../scripts/issuer-identity.mjs";
 import { createHash } from "node:crypto";
-const idl = JSON.parse(readFileSync("solana/target/idl/certichain.json", "utf8"));
+const idl = JSON.parse(readFileSync(new URL("../target/idl/certichain.json", import.meta.url), "utf8"));
 const walletFile = process.env.ISSUER_KEYPAIR;
 if (!walletFile) throw new Error("Set ISSUER_KEYPAIR to the configured deployment/upgrade-authority keypair file.");
 const issuer = loadVerifiedIssuer(walletFile);
 const rpc = process.env.RPC_URL ?? "http://127.0.0.1:8899";
+if (!["127.0.0.1", "localhost"].includes(new URL(rpc).hostname) && process.env.ALLOW_DEVNET_TEST !== "true") throw new Error("Local tests require localhost. Explicit ALLOW_DEVNET_TEST=true is required after local tests pass.");
 const connection = new Connection(rpc, "confirmed");
+if (!["127.0.0.1", "localhost"].includes(new URL(rpc).hostname)) assert.equal(await connection.getGenesisHash(), "EtWTRABZaYq6iMfeYKouRu166VU2xqa1", "Devnet only; Mainnet is prohibited");
 const provider = new AnchorProvider(connection, new Wallet(issuer), { commitment: "confirmed" });
 const program = new Program(idl, provider);
 const [config] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
@@ -26,6 +28,8 @@ const other = Keypair.generate();
 await provider.sendAndConfirm(new Transaction().add(SystemProgram.transfer({ fromPubkey: issuer.publicKey, toPubkey: other.publicKey, lamports: 10000000 })));
 const otherProgram = new Program(idl, new AnchorProvider(connection, new Wallet(other), { commitment: "confirmed" }));
 const unauthorized = error => error?.error?.errorCode?.code === "Unauthorized";
+const existingConfig = await connection.getAccountInfo(config);
+if (existingConfig && process.env.ALLOW_DEVNET_TEST !== "true") throw new Error("Fresh local validator required to execute initialization rejection tests.");
 if (!(await connection.getAccountInfo(config))) {
   await assert.rejects(otherProgram.methods.initialize().accountsStrict({ authority: other.publicKey, config, program: program.programId, programData, systemProgram: SystemProgram.programId }).rpc(), unauthorized);
   assert.equal(await connection.getAccountInfo(config), null);
@@ -38,8 +42,14 @@ const [record] = PublicKey.findProgramAddressSync([Buffer.from("certificate"), B
 await program.methods.simpanSertifikat(seed, hash).accountsStrict({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc();
 const stored = await program.account.certificateRecord.fetch(record);
 assert.deepEqual(stored.certificateHash, hash); assert.equal(stored.issuer.toBase58(), issuer.publicKey.toBase58()); assert.equal(stored.revoked, false);
-assert.equal((await connection.getAccountInfo(record)).data.length, 82);
+assert.equal((await connection.getAccountInfo(record)).data.length, 114);
+assert.deepEqual(stored.certificateSeed, seed);
+assert.deepEqual(PublicKey.findProgramAddressSync([Buffer.from("certificate"), Buffer.from(seed)], program.programId)[0], record);
 await program.methods.verifikasiSertifikat(seed, hash).accountsStrict({ record }).rpc();
+await assert.rejects(program.methods.verifikasiSertifikat(seed, hash.map((byte, i) => i === 0 ? byte ^ 1 : byte)).accountsStrict({ record }).rpc(), error => error?.error?.errorCode?.code === "HashMismatch");
+await assert.rejects(async () => program.methods.simpanSertifikat(seed, hash.slice(1)).accountsStrict({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc());
+await assert.rejects(program.methods.verifikasiSertifikat(seed, hash).accountsStrict({ record: config }).rpc());
+assert.equal(idl.instructions.some(instruction => instruction.name.replaceAll("_", "").toLowerCase() === "updateauthority"), false, "Authority rotation intentionally not exposed");
 await assert.rejects(program.methods.simpanSertifikat(seed, hash).accountsStrict({ issuer: issuer.publicKey, config, record, systemProgram: SystemProgram.programId }).rpc());
 
 await assert.rejects(otherProgram.methods.cabutSertifikat(seed).accountsStrict({ issuer: other.publicKey, config, record }).rpc(), unauthorized);
@@ -50,5 +60,12 @@ await assert.rejects(otherProgram.methods.simpanSertifikat(wrongSeed, hash).acco
 assert.equal(await connection.getAccountInfo(wrongRecord), null);
 await program.methods.cabutSertifikat(seed).accountsStrict({ issuer: issuer.publicKey, config, record }).rpc();
 assert.equal((await program.account.certificateRecord.fetch(record)).revoked, true);
+const revoked = await program.account.certificateRecord.fetch(record);
+assert.deepEqual(revoked.certificateHash, stored.certificateHash);
+assert.deepEqual(revoked.certificateSeed, stored.certificateSeed);
+assert.equal(revoked.createdAt.toString(), stored.createdAt.toString());
+assert.equal(revoked.issuer.toBase58(), stored.issuer.toBase58());
+await assert.rejects(program.methods.cabutSertifikat(seed).accountsStrict({ issuer: issuer.publicKey, config, record }).rpc(), error => error?.error?.errorCode?.code === "AlreadyRevoked");
 await assert.rejects(program.methods.verifikasiSertifikat(seed, hash).accountsStrict({ record }).rpc());
 console.log("Validator integration passed: issue, read PDA, verify, duplicate rejection, unauthorized rejection, revoke and retained evidence.");
+if (["127.0.0.1", "localhost"].includes(new URL(rpc).hostname)) writeFileSync(new URL("../target/local-tests-passed.json", import.meta.url), JSON.stringify({ programId: program.programId.toBase58(), issuer: issuer.publicKey.toBase58(), testedAt: new Date().toISOString(), binaryHash: createHash("sha256").update(readFileSync(new URL("../target/deploy/certichain.so", import.meta.url))).digest("hex") }, null, 2));

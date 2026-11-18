@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
-import { canonicalCertificate, certificateHash, certificateHashHex } from "@/lib/certificate-hash";
+import { canonicalCertificate, certificateHash, certificateHashHex, certificateHashBytes } from "@/lib/certificate-hash";
 import type { Certificate } from "@/lib/types";
 export const fixture: Certificate = { id: "cert-1", verification_code: "CC-TEST-1234", student_id: "student-1", certificate_name: "Akademik", institution: "Universitas Demo", issue_date: "2026-11-14", description: "Tidak dicatat", status: "valid", created_at: "2026-11-14", updated_at: "2026-11-14" };
 describe("certificate commitments", () => {
+  it("round trips exactly 32 bytes from 64 hex characters", () => {
+    expect(certificateHashBytes(certificateHashHex(fixture))).toEqual(certificateHash(fixture));
+    expect(() => certificateHashBytes("ab".repeat(31))).toThrow();
+    expect(() => certificateHashBytes("zz".repeat(32))).toThrow();
+  });
   it("is exactly 32 bytes / 64 hexadecimal characters using SHA-256", () => {
     expect(certificateHash(fixture)).toHaveLength(32);
     expect(certificateHashHex(fixture)).toMatch(/^[a-f0-9]{64}$/);

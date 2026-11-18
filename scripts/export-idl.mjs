@@ -6,6 +6,9 @@ const revoke = idl.instructions.find(i => i.name === "cabut_sertifikat" || i.nam
 if (revoke?.accounts.map(a => a.name).join(",") !== "issuer,config,record") throw new Error("Rebuild Anchor: revocation ABI is outdated.");
 const initialize = idl.instructions.find(i => i.name === "initialize");
 if (initialize?.accounts.find(a => a.name === "authority")?.address !== issuerConfig.publicAddress) throw new Error("Rebuild Anchor: issuer constraint missing from IDL.");
+const record = idl.types?.find(t => t.name.replaceAll("_", "").toLowerCase() === "certificaterecord");
+if (record?.type.fields.map(f => f.name.replaceAll("_", "").toLowerCase()).join(",") !== "certificatehash,issuer,createdat,revoked,bump,certificateseed") throw new Error("Rebuild Anchor: certificate identifier layout missing.");
 mkdirSync("solana/idl", { recursive: true });
 writeFileSync("solana/idl/certichain.json", JSON.stringify(idl, null, 2));
+writeFileSync("config/anchor-idl.json", JSON.stringify(idl, null, 2));
 console.log(`IDL exported for ${idl.address}. Verify deployment before setting VITE_SOLANA_PROGRAM_ID.`);

@@ -114,8 +114,8 @@ function ResultCard({ result }: { result: VerifyResult }) {
       <div className={`flex items-center gap-3 px-5 py-4 ${valid ? "bg-success-soft" : "bg-destructive-soft"}`}>
         {valid ? <BadgeCheck className="size-6 text-success" /> : <Ban className="size-6 text-destructive" />}
         <div>
-          <p className={`font-semibold ${valid ? "text-success" : "text-destructive"}`}>Verifikasi Database/Demo · {valid ? "Valid" : "Dicabut"}</p>
-          <p className="text-sm text-muted-foreground">{valid ? "Sertifikat tercatat dan berstatus aktif." : "Sertifikat tercatat tetapi telah dicabut penerbit."}</p>
+          <p className={`font-semibold ${valid ? "text-success" : "text-destructive"}`}>Verifikasi Demo · {valid ? "Valid" : "Dicabut"}</p>
+          <p className="text-sm text-muted-foreground">{valid ? "Aktif pada data demo browser ini; status blockchain diperiksa terpisah." : "Dicabut pada data demo browser ini; status blockchain diperiksa terpisah."}</p>
         </div>
       </div>
       <dl className="grid gap-4 p-5 text-sm sm:grid-cols-2">

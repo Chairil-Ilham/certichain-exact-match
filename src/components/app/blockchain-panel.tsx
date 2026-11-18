@@ -34,7 +34,7 @@ export function BlockchainPanel({ certificate, admin = false }: { certificate: C
   };
   const verified = result && "record" in result ? result : null;
   const labels = { match: "Hash cocok", mismatch: "Hash tidak cocok", revoked: "Sertifikat dicabut on-chain", not_found: "Data on-chain tidak ditemukan", network_error: "Pemeriksaan jaringan gagal", unconfigured: "Belum dikonfigurasi" };
-  const allowed = solanaConfigured() && wallet.backend_authenticated && wallet.authSession?.role === "issuer" && isIssuerCandidate(wallet.public_key) && wallet.authSession.publicKey === wallet.public_key && wallet.authSession.expiresAt > Date.now();
+  const allowed = solanaConfigured() && wallet.backend_authenticated && wallet.authSession?.role === "issuer" && wallet.authSession.ownershipVerified && isIssuerCandidate(wallet.public_key) && wallet.authSession.publicKey === wallet.public_key && wallet.authSession.expiresAt > Date.now();
   return (
     <section className="mt-6 min-w-0 border-t pt-5" aria-label="Verifikasi Blockchain Solana">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -57,6 +57,7 @@ export function BlockchainPanel({ certificate, admin = false }: { certificate: C
         <div><dt className="text-muted-foreground">Penerbit</dt><dd className="break-all font-mono">{verified.record.issuer}</dd></div>
         <div><dt className="text-muted-foreground">PDA</dt><dd className="break-all font-mono">{verified.pda}</dd></div>
         <div><dt className="text-muted-foreground">Diperiksa pada slot</dt><dd>{verified.slot} · {verified.checkedAt}</dd></div>
+         <div><dt className="text-muted-foreground">Waktu pencatatan</dt><dd>{new Date(verified.record.createdAt * 1000).toISOString()}</dd></div>
         <Button asChild variant="outline" size="sm"><a href={explorerAccount(verified.pda)} target="_blank" rel="noreferrer"><ExternalLink /> Solana Explorer</a></Button>
       </dl>}
       {admin && <div className="mt-4 border-t pt-4">
@@ -66,6 +67,8 @@ export function BlockchainPanel({ certificate, admin = false }: { certificate: C
         {review && <div className="mt-4 space-y-3 border-l-2 border-primary pl-3">
           <p className="text-sm font-medium">Konfirmasi {review === "record" ? "pencatatan hash" : "pencabutan on-chain"}</p>
           <p className="text-sm">{certificate.certificate_name} · {certificate.verification_code}</p>
+           <p className="break-all text-xs">Certificate ID: {certificate.id}</p>
+           <p className="break-all font-mono text-xs">Hash: {hash}</p>
           <p className="break-all text-xs text-muted-foreground">Penerbit: {wallet.public_key} · Devnet. Memerlukan SOL Devnet untuk biaya jaringan. Status demo tidak berubah.</p>
           <Button size="sm" disabled={busy} onClick={() => void transact()}>{busy ? <Loader2 className="animate-spin" /> : <Link2 />} Setujui melalui Phantom</Button>
           <Button className="ml-2" size="sm" variant="ghost" disabled={busy} onClick={() => setReview(null)}>Batal</Button>

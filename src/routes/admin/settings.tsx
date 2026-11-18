@@ -29,9 +29,12 @@ function Settings() {
         <dl className="mt-4 space-y-3 text-sm">
           <div><dt className="text-muted-foreground">Kandidat issuer resmi</dt><dd className="break-all font-mono">{ISSUER_ADDRESS}</dd></div>
           <div><dt className="text-muted-foreground">Status otorisasi Solana</dt><dd>Belum aktif — build dan pengujian program belum selesai</dd></div>
+          <div><dt className="text-muted-foreground">Bukti kepemilikan wallet</dt><dd>{wallet.authSession?.ownershipVerified ? "Tanda tangan diverifikasi oleh layanan login" : "Belum terverifikasi"}</dd></div>
           <div><dt className="text-muted-foreground">Wallet pengguna terhubung</dt><dd className="break-all font-mono">{wallet.public_key ?? "Belum terhubung"}</dd></div>
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">Alamat publik bukan bukti kepemilikan. Deployment belum dilakukan; Admin Demo tidak memberi izin penerbit.</p>
+        <Button className="mt-3" variant="outline" disabled={wallet.public_key !== ISSUER_ADDRESS || wallet.loading} onClick={() => void wallet.verifyOwnership()}>Buktikan kepemilikan penerbit</Button>
+        {wallet.error && <p className="mt-2 text-sm text-destructive" role="alert">{wallet.error}</p>}
       </section>
       <div className="rounded-xl border bg-card p-6 shadow-card">
         <h2 className="font-semibold">Status integrasi</h2>
