@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { Keypair } from "@solana/web3.js";
 import { ed25519 } from "@noble/curves/ed25519.js";
 export const issuerConfig = JSON.parse(readFileSync(new URL("../config/issuer.json", import.meta.url), "utf8"));
+export const projectRoot = new URL("../", import.meta.url);
 export function assertIssuerAddress(address) {
   if (address !== issuerConfig.publicAddress) throw new Error("Signing wallet does not match the configured candidate issuer. Stop before deployment or transactions.");
 }

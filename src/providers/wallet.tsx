@@ -128,13 +128,17 @@ export function WalletAuthProvider({ children }: { children: ReactNode }) {
   }, [clearAuth]);
   const signTransaction = useCallback(async (tx: Transaction) => {
     const provider = providerRef.current;
+    const epoch = generation.current;
     if (!provider?.isConnected || !authSession || authSession.publicKey !== provider.publicKey?.toString()) throw new Error("Autentikasi wallet diperlukan");
     const { session } = await walletAuthRequest<{ session: WalletAuthSession | null }>("session");
+    if (epoch !== generation.current) throw new Error("Sesi berubah; setujui ulang menggunakan wallet aktif");
     if (!session || session.role !== "issuer" || !session.ownershipVerified || session.publicKey !== provider.publicKey?.toString()) throw new Error("Wallet belum memiliki otorisasi penerbit");
     requireIssuerCandidate(session.publicKey);
     if (session.expiresAt <= Date.now()) throw new Error("Sesi penerbit kedaluwarsa");
     if (tx.feePayer?.toBase58() !== session.publicKey) throw new Error("Wallet transaksi tidak sesuai penerbit");
-    return provider.signTransaction(tx);
+    const signed = await provider.signTransaction(tx);
+    if (epoch !== generation.current || provider.publicKey?.toString() !== session.publicKey) throw new Error("Wallet berubah; transaksi tidak dikirim");
+    return signed;
   }, [authSession]);
   const value = useMemo(() => ({ ...state, ready, loading, error, authSession, connect, authenticate, verifyOwnership, disconnect, signTransaction }), [state, ready, loading, error, authSession, connect, authenticate, verifyOwnership, disconnect, signTransaction]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

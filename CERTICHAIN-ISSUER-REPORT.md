@@ -1,5 +1,7 @@
 # Laporan konfigurasi Issuer Wallet CertiChain
 
+> Pembaruan finalisasi: pembuktian kepemilikan khusus lewat challenge bertujuan `issuer-ownership` tersedia; layanan nyata masih belum aktif. Signature khusus memberi status kepemilikan, **bukan active issuer**. Account sertifikat sekarang 114 byte dengan identifier, IDL lama ditolak. Panduan operator terbaru: `CERTICHAIN-WINDOWS.md`; pengujian terbaru: `CERTICHAIN-FINALIZATION.md`. Pernyataan jumlah tes di bawah adalah catatan historis.
+
 ## Status
 
 - Kandidat issuer resmi: `DUPoMPmu5Hbsh1RNHuc2VMV3GVCZkj8ZEZbybk5fRh4k`.

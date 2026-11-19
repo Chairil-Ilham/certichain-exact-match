@@ -41,7 +41,7 @@ export default {
 export class WalletTTL {
   constructor(private state: State, private env: Env) {}
   async alarm() {
-    const entries = await this.state.storage.list<Challenge | WalletSession>();
+    const entries = await this.state.storage.list<Challenge | WalletSession | RateEntry>();
     for (const [key, value] of entries) if (value.expiresAt <= Date.now()) await this.state.storage.delete(key);
     if (entries.size) await this.state.storage.setAlarm(Date.now() + 60000);
   }

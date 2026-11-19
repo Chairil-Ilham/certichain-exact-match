@@ -1,5 +1,7 @@
 # CertiChain: configuration and verification boundaries
 
+> Pembaruan finalisasi: ikuti `CERTICHAIN-WINDOWS.md` dan `CERTICHAIN-AUTH.md`. Account CertificateRecord sekarang **114 byte**, menambahkan identifier `certificate_seed` pada offset 82. Rebuild dan ekspor IDL wajib; ABI 82 byte di catatan historis berikut tidak lagi diterima. Ekspor menulis IDL asli ke `config/anchor-idl.json`; `null` berarti belum tersedia. Hasil terbaru ada di `CERTICHAIN-FINALIZATION.md`.
+
 Existing browser demo records, roles, pages and routes remain in place. No Cloud or permanent application database is connected. Clearing the browser or switching devices loses demo data and local transaction references.
 
 ## Temporary authentication service

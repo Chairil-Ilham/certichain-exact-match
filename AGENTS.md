@@ -22,3 +22,4 @@
 - Authentication rate counters and purpose-bound issuer ownership challenges share serialized TTL storage; this prevents replay and frontend role claims from becoming issuer authority.
 - Export generated Anchor IDL into shared public configuration and validate its address/ABI before network operations; record identifiers are stored alongside hashes so account reads verify the exact certificate commitment.
 - Validator tests emit a binary-bound local receipt for the operator deployment preflight; keep signing-wallet files outside the repository and never stage generated output.
+- Split connection configuration, generated-IDL validation, network issuer authorization and certificate operations into browser-safe services; reject changed signing sessions or transaction messages before broadcast.

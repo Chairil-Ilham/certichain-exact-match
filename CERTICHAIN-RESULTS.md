@@ -1,5 +1,7 @@
 # Laporan lanjutan CertiChain
 
+> Catatan historis. Laporan pekerjaan dan hasil pengujian terbaru ada di `CERTICHAIN-FINALIZATION.md`; panduan Windows ada di `CERTICHAIN-WINDOWS.md`. Account sertifikat terbaru 114 byte dan memerlukan IDL hasil rebuild, bukan layout 82 byte yang disebut dalam laporan awal ini.
+
 ## Status ringkas
 
 Fitur demo lama dipertahankan. Tidak memasang Cloud, PostgreSQL atau database permanen; tidak mereset data pengguna. Integrasi hash dan Solana serta kode layanan autentikasi sementara telah ditambahkan. **Belum selesai sebagai sistem on-chain yang aktif:** tidak ada layanan autentikasi yang dideploy, program Devnet yang dideploy, Program ID nyata atau transaksi Phantom nyata dalam pengujian ini.

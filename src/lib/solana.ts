@@ -1,21 +1,15 @@
-import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { certificateHash, certificateSeed } from "./certificate-hash";
 import type { Certificate } from "./types";
 import { ISSUER_ADDRESS, requireIssuerCandidate } from "./issuer-config";
 import { discriminator } from "./solana-discriminator";
-import { requireAnchorIdl } from "./anchor-program";
+import { solanaConfigured, solanaConnection as configuration } from "./solana-connection";
+import { requireDevnetIssuer } from "./issuer-authorization";
 
 export { discriminator };
-export const solanaConfigured = () => Boolean(import.meta.env['VITE_SOLANA_PROGRAM_ID']);
-function configuration() {
-  const id = import.meta.env['VITE_SOLANA_PROGRAM_ID'];
-  if (!id) throw new Error("Program Solana belum dideploy atau Program ID belum dikonfigurasi.");
-  requireAnchorIdl(id);
-  const rpc = import.meta.env['VITE_SOLANA_RPC_URL'] ?? "https://api.devnet.solana.com";
-  return { program: new PublicKey(id), connection: new Connection(rpc, { commitment: "confirmed", fetch: (url, init) => fetch(url, { ...init, signal: AbortSignal.timeout(20000) }) }) };
-}
+export { solanaConfigured };
 export function deriveCertificatePda(c: Certificate, program: PublicKey) {
   return PublicKey.findProgramAddressSync([Buffer.from("certificate"), Buffer.from(certificateSeed(c))], program);
 }
@@ -34,16 +28,11 @@ export type ChainResult =
 export function compareRecord(record: OnchainRecord, expected: string): "match" | "mismatch" | "revoked" {
   return record.revoked ? "revoked" : record.hash === expected ? "match" : "mismatch";
 }
-async function requireDevnet(connection: Connection, program: PublicKey) {
-  if (await connection.getGenesisHash() !== "EtWTRABZaYq6iMfeYKouRu166VU2xqa1") throw new Error("RPC bukan Solana Devnet");
-  const account = await connection.getAccountInfo(program);
-  if (!account?.executable) throw new Error("Program ID belum merupakan program executable");
-}
 export async function verifyOnchain(c: Certificate): Promise<ChainResult> {
   if (!solanaConfigured()) return { state: "unconfigured", message: "Program ID hasil deployment Devnet belum dikonfigurasi. Belum ada pemeriksaan jaringan." };
   try {
     const { program, connection } = configuration();
-    await requireDevnet(connection, program);
+    await requireDevnetIssuer(connection, program);
     const [pda, bump] = deriveCertificatePda(c, program);
     const response = await connection.getAccountInfoAndContext(pda);
     if (!response.value) return { state: "not_found", message: "Data on-chain tidak ditemukan pada PDA sertifikat di Devnet." };
@@ -59,11 +48,8 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   requireIssuerCandidate(issuerAddress);
   const { connection, program } = configuration();
   onStage("Memeriksa jaringan dan otorisasi penerbit…");
-  await requireDevnet(connection, program);
+  const configPda = await requireDevnetIssuer(connection, program);
   const issuer = new PublicKey(issuerAddress);
-  const [configPda, configBump] = PublicKey.findProgramAddressSync([Buffer.from("config")], program);
-  const config = await connection.getAccountInfo(configPda);
-  if (!config || !config.owner.equals(program) || config.data.length !== 41 || config.data[40] !== configBump || !discriminator("account:Config").every((b, i) => config.data[i] === b) || !new PublicKey(config.data.subarray(8, 40)).equals(issuer)) throw new Error("Wallet tidak berwenang pada konfigurasi penerbit on-chain");
   const [pda, bump] = deriveCertificatePda(c, program);
   const hash = certificateHash(c);
   const name = operation === "record" ? "simpan_sertifikat" : "cabut_sertifikat";
@@ -75,7 +61,9 @@ export async function submitCertificate(c: Certificate, issuerAddress: string, s
   const blockhash = await connection.getLatestBlockhash();
   const tx = new Transaction({ ...blockhash, feePayer: issuer }).add(new TransactionInstruction({ programId: program, keys, data }));
   onStage("Menunggu persetujuan transaksi di Phantom…");
+  const requestedMessage = tx.serializeMessage();
   const signed = await sign(tx);
+  if (!requestedMessage.equals(signed.serializeMessage())) throw new Error("Isi transaksi berubah setelah persetujuan; transaksi tidak dikirim");
   onStage("Mengirim transaksi ke Devnet…");
   const signature = await connection.sendRawTransaction(signed.serialize());
   onStage("Menunggu konfirmasi Devnet…");

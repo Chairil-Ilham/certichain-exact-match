@@ -1,8 +1,8 @@
 # CertiChain continuation
-- [ ] Finalization phase 1: audit existing source and preserve demo records.
-- [ ] Finalization phases 2–3: harden TTL authentication, account-change handling and explicit issuer ownership proof.
-- [ ] Finalization phases 4–6: strengthen Anchor validation/test source, hash conversion and verified frontend evidence.
-- [ ] Finalization phases 9–10: run available tests/browser flows; document Windows operator commands and actual blockers.
+- [x] Finalization phase 1: audit source and preserve demo records; browser compared student/certificate data unchanged.
+- [x] Finalization phases 2–3: harden TTL source, account-change reauthentication and explicit issuer ownership proof (offline tested, not live deployed).
+- [x] Finalization phases 4–6: strengthen Anchor source/tests, stored identifier, hash conversion, generated-IDL gate and network authority checks (Anchor execution still blocked below).
+- [x] Finalization phases 9–10: 52 Vitest + 2 operator tests passed; browser demo/mobile checked; Windows commands and honest finalization report delivered.
 - [x] Configure candidate issuer, enforce Anchor signer checks, add identity tests, and write pre-deployment report without changing demo data (38 offline tests; no Solana activation claim).
 - [x] Canonical SHA-256 hashing and rule tests.
 - [x] Wallet lifecycle and signature-authentication core; fail closed without reliable shared TTL service.
@@ -10,5 +10,5 @@
 - [x] Devnet transaction and public account verification integration; keep demo status separate (code and offline checks, not live deployment).
 - [x] Regression tests, browser checks and implementation report.
 - [ ] Anchor compilation, generated IDL and validator execution: blocked by unavailable Anchor/Solana toolchain and actual deployment identity.
-- [ ] Live wallet authentication: blocked by a trusted external temporary authentication service (Cloud/database prohibited).
+- [ ] Live wallet authentication: blocked by operator HTTPS domain answer, same-origin hosting/TTL deployment and real Phantom approval; no permanent database permitted.
 - [ ] Real Devnet deployment and wallet approval: blocked by successful Anchor build/validator tests, actual program identity, proof of candidate wallet ownership, funding and real Phantom approval; candidate issuer configured, not active.
